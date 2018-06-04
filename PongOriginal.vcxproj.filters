@@ -31,6 +31,12 @@
     <Filter Include="ライブラリ\ユーティリティ">
       <UniqueIdentifier>{daae40c7-ff74-47e6-98c1-472de706acab}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ゲーム\ゲームオブジェクト">
+      <UniqueIdentifier>{9b3a7252-892f-49f1-b29e-4bc781ba6f15}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ゲーム\ベクトル">
+      <UniqueIdentifier>{576ffcda-ddf8-45d1-a281-ac47cb555fbb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="WinMain.cpp" />
@@ -52,20 +58,20 @@
     <ClCompile Include="Libralies\GameLibrary\GameLibTime.cpp">
       <Filter>ライブラリ\ゲームライブラリ</Filter>
     </ClCompile>
-    <ClCompile Include="Game\MovingObject.cpp">
-      <Filter>ゲーム</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\Vec2.cpp">
-      <Filter>ゲーム</Filter>
+    <ClCompile Include="Game\BallObject.cpp">
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
     </ClCompile>
     <ClCompile Include="Game\BoxMovingObject.cpp">
-      <Filter>ゲーム</Filter>
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\MovingObject.cpp">
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
     </ClCompile>
     <ClCompile Include="Game\PaddleObject.cpp">
-      <Filter>ゲーム</Filter>
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
     </ClCompile>
-    <ClCompile Include="Game\BallObject.cpp">
-      <Filter>ゲーム</Filter>
+    <ClCompile Include="Game\Vec2.cpp">
+      <Filter>ゲーム\ベクトル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -96,20 +102,20 @@
     <ClInclude Include="Libralies\Utilities\MemoryLeakDetector.h">
       <Filter>ライブラリ\ユーティリティ</Filter>
     </ClInclude>
-    <ClInclude Include="Game\MovingObject.h">
-      <Filter>ゲーム</Filter>
-    </ClInclude>
-    <ClInclude Include="Game\Vec2.h">
-      <Filter>ゲーム</Filter>
+    <ClInclude Include="Game\BallObject.h">
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
     </ClInclude>
     <ClInclude Include="Game\BoxMovingObject.h">
-      <Filter>ゲーム</Filter>
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\MovingObject.h">
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
     </ClInclude>
     <ClInclude Include="Game\PaddleObject.h">
-      <Filter>ゲーム</Filter>
+      <Filter>ゲーム\ゲームオブジェクト</Filter>
     </ClInclude>
-    <ClInclude Include="Game\BallObject.h">
-      <Filter>ゲーム</Filter>
+    <ClInclude Include="Game\Vec2.h">
+      <Filter>ゲーム\ベクトル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
