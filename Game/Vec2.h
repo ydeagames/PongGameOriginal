@@ -3,7 +3,7 @@ struct Vec2
 {
 	float x, y;
 
-	constexpr Vec2();
+	Vec2();
 	constexpr Vec2(const Vec2 &vec2);
 	constexpr Vec2(float x, float y);
 
