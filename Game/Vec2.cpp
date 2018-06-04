@@ -1,15 +1,45 @@
 #include "Vec2.h"
+#include <cmath>
 
 
-
-Vec2::Vec2() : x(0.f), y(0.f)
+constexpr Vec2::Vec2(float x, float y) : x(x), y(y)
 {
 }
 
-constexpr Vec2::Vec2(const Vec2 &vec2) = default;
-
-constexpr Vec2::Vec2(float _x, float _y) : x(_x), y(_y)
+// 長さ
+float Vec2::length() const
 {
+	return std::sqrt(lengthSquare());
+}
+
+// 長さの二乗
+constexpr float Vec2::lengthSquare() const
+{
+	return dot(*this);
+}
+
+// 内積
+constexpr float Vec2::dot(const Vec2& other) const
+{
+	return x * other.x + y * other.y;
+}
+
+// 二点間距離
+float Vec2::distanceFrom(const Vec2& other) const
+{
+	return (other - *this).length();
+}
+
+// 正規化
+Vec2 Vec2::normalized() const
+{
+	return *this / length();
+}
+
+// 0ベクトル
+constexpr bool Vec2::isZero() const
+{
+	return x == 0.0 && y == 0.0;
 }
 
 // 単項 +
@@ -21,31 +51,31 @@ constexpr Vec2 Vec2::operator +() const
 // 単項 -
 constexpr Vec2 Vec2::operator -() const
 {
-	return Vec2(-x, -y);
+	return {-x, -y};
 }
 
 // 二項 +
-constexpr Vec2 Vec2::operator +(Vec2 &other) const
+constexpr Vec2 Vec2::operator +(const Vec2 &other) const
 {
-	return Vec2(x + other.x, y + other.y);
+	return {x + other.x, y + other.y};
 }
 
 // 二項 -
-constexpr Vec2 Vec2::operator -(Vec2 &other) const
+constexpr Vec2 Vec2::operator -(const Vec2 &other) const
 {
-	return Vec2(x - other.x, y - other.y);
+	return {x - other.x, y - other.y};
 }
 
 // 2項 *
 constexpr Vec2 Vec2::operator *(float s) const
 {
-	return Vec2(x * s, y * s);
+	return {x * s, y * s};
 }
 
 // 2項 /
 constexpr Vec2 Vec2::operator /(float s) const
 {
-	return Vec2(x / s, y / s);
+	return {x / s, y / s};
 }
 
 // 複合代入演算 +=

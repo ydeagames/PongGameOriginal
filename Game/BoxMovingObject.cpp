@@ -2,6 +2,10 @@
 
 
 
+BoxMovingObject::BoxMovingObject(Vec2 pos, Vec2 vel, Vec2 size) : MovingObject::MovingObject(pos, vel), size(size)
+{
+}
+
 bool BoxMovingObject::IsHit(BoxMovingObject &other)
 {
 	float b_x1 = other.pos.x - other.size.x / 2;
