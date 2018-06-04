@@ -87,8 +87,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game\BoxMovingObject.cpp" />
     <ClCompile Include="Game\GameMain.cpp" />
     <ClCompile Include="Game\MovingObject.cpp" />
+    <ClCompile Include="Game\PaddleObject.cpp" />
     <ClCompile Include="Game\Vec2.cpp" />
     <ClCompile Include="Libralies\GameLibrary\GameLibGraphics.cpp" />
     <ClCompile Include="Libralies\GameLibrary\GameLibInput.cpp" />
@@ -98,8 +100,10 @@
     <ClCompile Include="WinMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game\BoxMovingObject.h" />
     <ClInclude Include="Game\GameMain.h" />
     <ClInclude Include="Game\MovingObject.h" />
+    <ClInclude Include="Game\PaddleObject.h" />
     <ClInclude Include="Game\Vec2.h" />
     <ClInclude Include="Libralies\GameLibrary\GameLibGraphics.h" />
     <ClInclude Include="Libralies\GameLibrary\GameLibInput.h" />

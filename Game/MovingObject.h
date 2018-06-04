@@ -7,6 +7,6 @@ struct MovingObject
 	Vec2 pos;
 	Vec2 vel;
 
-	MovingObject();
+	void UpdatePosition();
 };
 

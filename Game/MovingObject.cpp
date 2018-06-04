@@ -2,6 +2,7 @@
 
 
 
-MovingObject::MovingObject()
+void MovingObject::UpdatePosition()
 {
+	pos += vel;
 }

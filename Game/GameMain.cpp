@@ -10,6 +10,7 @@
 
 // ヘッダファイルの読み込み ================================================
 #include "GameMain.h"
+#include "BoxMovingObject.h"
 
 
 // 列挙型の定義 ============================================================
@@ -68,8 +69,7 @@ int g_input_state;
 int g_game_state;
 
 // <ボール> ------------------------------------------------------------
-float g_ball_pos_x, g_ball_pos_y;
-float g_ball_vel_x, g_ball_vel_y;
+BoxMovingObject g_ball;
 
 // <パドル1> -----------------------------------------------------------
 float g_paddle1_pos_x, g_paddle1_pos_y;

@@ -58,6 +58,12 @@
     <ClCompile Include="Game\Vec2.cpp">
       <Filter>ゲーム</Filter>
     </ClCompile>
+    <ClCompile Include="Game\BoxMovingObject.cpp">
+      <Filter>ゲーム</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\PaddleObject.cpp">
+      <Filter>ゲーム</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\GameMain.h">
@@ -91,6 +97,12 @@
       <Filter>ゲーム</Filter>
     </ClInclude>
     <ClInclude Include="Game\Vec2.h">
+      <Filter>ゲーム</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\BoxMovingObject.h">
+      <Filter>ゲーム</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\PaddleObject.h">
       <Filter>ゲーム</Filter>
     </ClInclude>
   </ItemGroup>
