@@ -100,8 +100,6 @@ void UpdateGameControlPaddleBot1(void);
 void UpdateGameControlPaddleBot2(void);
 
 // <ゲームの更新処理:オブジェクト:座標> --------------------------------
-void UpdateGameObjectPositionBall(void);
-void UpdateGameObjectPositionPaddle(void);
 void UpdateGameObjectPositionPaddleTarget(void);
 
 // <ゲームの更新処理:オブジェクト:当たり判定> --------------------------
@@ -236,7 +234,7 @@ void UpdateGameSceneDemo(void)
 	}
 
 	// 座標更新
-	UpdateGameObjectPositionBall();
+	GameObject_UpdatePosition(&g_ball);
 
 	// 当たり判定
 	UpdateGameObjectCollisionBallTopBottom();
@@ -267,8 +265,9 @@ void UpdateGameSceneServe(void)
 	UpdateGameControlPaddle2();
 
 	// 座標更新
-	UpdateGameObjectPositionBall();
-	UpdateGameObjectPositionPaddle();
+	GameObject_UpdatePosition(&g_ball);
+	GameObject_UpdatePosition(&g_paddle1);
+	GameObject_UpdatePosition(&g_paddle2);
 
 	// 当たり判定
 	UpdateGameObjectCollisionBallTopBottom();
@@ -287,8 +286,9 @@ void UpdateGameScenePlay(void)
 	UpdateGameControlPaddle2();
 
 	// 座標更新
-	UpdateGameObjectPositionBall();
-	UpdateGameObjectPositionPaddle();
+	GameObject_UpdatePosition(&g_ball);
+	GameObject_UpdatePosition(&g_paddle1);
+	GameObject_UpdatePosition(&g_paddle2);
 
 	// 当たり判定
 	if (UpdateGameObjectCollisionBallTopBottom())
@@ -322,22 +322,22 @@ void UpdateGameControlPaddle2(void)
 void UpdateGameControlPaddlePlayer1(void)
 {
 	// キー入力でパドル1を操作
-	g_paddle1_vel_y = 0.f;
+	g_paddle1.vel.y = 0.f;
 	if (g_input_state & (PAD_INPUT_8 | PAD_INPUT_4))
-		g_paddle1_vel_y += -PADDLE_VEL;
+		g_paddle1.vel.y += -PADDLE_VEL;
 	if (g_input_state & (PAD_INPUT_5 | PAD_INPUT_1))
-		g_paddle1_vel_y += PADDLE_VEL;
+		g_paddle1.vel.y += PADDLE_VEL;
 }
 
 // <ゲームの更新処理:操作:プレイヤー2> ---------------------------------
 void UpdateGameControlPaddlePlayer2(void)
 {
 	// キー入力でパドル2を操作
-	g_paddle2_vel_y = 0.f;
+	g_paddle2.vel.y = 0.f;
 	if (g_input_state & PAD_INPUT_UP)
-		g_paddle2_vel_y += -PADDLE_VEL;
+		g_paddle2.vel.y += -PADDLE_VEL;
 	if (g_input_state & PAD_INPUT_DOWN)
-		g_paddle2_vel_y += PADDLE_VEL;
+		g_paddle2.vel.y += PADDLE_VEL;
 }
 
 // <ゲームの更新処理:操作:Bot1> ----------------------------------------
@@ -346,25 +346,25 @@ void UpdateGameControlPaddleBot1(void)
 	// Botが動き始めるしきい値
 	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
 
-	g_paddle1_vel_y = 0.f;
+	g_paddle1.vel.y = 0.f;
 
 	// 自分向きかつしきい値より近かったら動く
-	if (g_ball_vel_x < 0 && g_ball_pos_x < g_paddle1_pos_x + padding)
+	if (g_ball.vel.x < 0 && g_ball.pos.x < g_paddle1.pos.x + padding)
 	{
 		// Botがパドル1を操作
-		float target1_pos_y = g_paddle1_target_pos_y;
+		float target1_pos_y = g_paddle1_target_pos.y;
 
 		// 死んだら中央に戻る
-		if (g_ball_pos_x < SCREEN_LEFT)
-			target1_pos_y = ClampF(g_paddle1_pos_y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
+		if (g_ball.pos.x < SCREEN_LEFT)
+			target1_pos_y = ClampF(g_paddle1.pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
 
 		// Botが移動できる幅を制限
 		//target1_pos_y = ClampF(target1_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
 
-		if (g_paddle1_pos_y - target1_pos_y > 1.2f * PADDLE_VEL)
-			g_paddle1_vel_y += -PADDLE_VEL;
-		else if (g_paddle1_pos_y - target1_pos_y < -1.2f * PADDLE_VEL)
-			g_paddle1_vel_y += PADDLE_VEL;
+		if (g_paddle1.pos.y - target1_pos_y > 1.2f * PADDLE_VEL)
+			g_paddle1.vel.y += -PADDLE_VEL;
+		else if (g_paddle1.pos.y - target1_pos_y < -1.2f * PADDLE_VEL)
+			g_paddle1.vel.y += PADDLE_VEL;
 	}
 }
 
@@ -374,58 +374,34 @@ void UpdateGameControlPaddleBot2(void)
 	// Botが動き始めるしきい値
 	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
 
-	g_paddle2_vel_y = 0.f;
+	g_paddle2.vel.y = 0.f;
 
 	// 自分向きかつしきい値より近かったら動く
-	if (g_ball_vel_x > 0 && g_ball_pos_x > g_paddle2_pos_x - padding)
+	if (g_ball.vel.x > 0 && g_ball.pos.x > g_paddle2.pos.x - padding)
 	{
 		// Botがパドル2を操作
-		float target2_pos_y = g_paddle2_target_pos_y;
+		float target2_pos_y = g_paddle2_target_pos.y;
 
 		// 死んだら中央に戻る
-		if (g_ball_pos_x > SCREEN_RIGHT)
-			target2_pos_y = ClampF(g_paddle2_pos_y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
+		if (g_ball.pos.x > SCREEN_RIGHT)
+			target2_pos_y = ClampF(g_paddle2.pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
 
 		// Botが移動できる幅を制限
 		//target2_pos_y = ClampF(target2_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
 
-		if (g_paddle2_pos_y - target2_pos_y > 1.2f * PADDLE_VEL)
-			g_paddle2_vel_y += -PADDLE_VEL;
-		else if (g_paddle2_pos_y - target2_pos_y < -1.2f * PADDLE_VEL)
-			g_paddle2_vel_y += PADDLE_VEL;
+		if (g_paddle2.pos.y - target2_pos_y > 1.2f * PADDLE_VEL)
+			g_paddle2.vel.y += -PADDLE_VEL;
+		else if (g_paddle2.pos.y - target2_pos_y < -1.2f * PADDLE_VEL)
+			g_paddle2.vel.y += PADDLE_VEL;
 	}
-}
-
-// <ゲームの更新処理:座標:ボール> --------------------------------------
-void UpdateGameObjectPositionBall(void)
-{
-	// 座標更新
-
-	// posにvelを足す
-	g_ball_pos_x += g_ball_vel_x;
-	g_ball_pos_y += g_ball_vel_y;
-}
-
-// <ゲームの更新処理:座標:パドル> --------------------------------------
-void UpdateGameObjectPositionPaddle(void)
-{
-	// 座標更新
-
-	// posにvelを足す
-	g_paddle1_pos_x += g_paddle1_vel_x;
-	g_paddle1_pos_y += g_paddle1_vel_y;
-
-	// posにvelを足す
-	g_paddle2_pos_x += g_paddle2_vel_x;
-	g_paddle2_pos_y += g_paddle2_vel_y;
 }
 
 // <ゲームの更新処理:座標:パドルターゲット> ----------------------------
 void UpdateGameObjectPositionPaddleTarget(void)
 {
 	// ターゲット計算
-	g_paddle1_target_pos_y = GetTargetY(g_paddle1_pos_x, g_paddle2_pos_x, 1);
-	g_paddle2_target_pos_y = GetTargetY(g_paddle2_pos_x, g_paddle1_pos_x, -1);
+	g_paddle1_target_pos.y = GetTargetY(g_paddle1.pos.x, g_paddle2.pos.x, 1);
+	g_paddle2_target_pos.y = GetTargetY(g_paddle2.pos.x, g_paddle1.pos.x, -1);
 }
 
 // <ゲームの更新処理:衝突:ボール×壁上下> ------------------------------
@@ -436,19 +412,19 @@ int UpdateGameObjectCollisionBallTopBottom(void)
 
 	// ボール・上下壁当たり判定
 	{
-		float padding_top = SCREEN_TOP + (BALL_SIZE / 2);
-		float padding_bottom = SCREEN_BOTTOM - (BALL_SIZE / 2);
+		float padding_top = SCREEN_TOP + (g_ball.size.y / 2);
+		float padding_bottom = SCREEN_BOTTOM - (g_ball.size.y / 2);
 
 		// 画面外に出たときの処理
-		if (g_ball_pos_y < padding_top || padding_bottom <= g_ball_pos_y)
+		if (g_ball.pos.y < padding_top || padding_bottom <= g_ball.pos.y)
 		{
-			g_ball_vel_y *= -1.f;
+			g_ball.vel.y *= -1.f;
 
 			flag_hit = 1;
 		}
 
 		// 壁にめり込まないように調整
-		g_ball_pos_y = ClampF(g_ball_pos_y, padding_top, padding_bottom);
+		g_ball.pos.y = ClampF(g_ball.pos.y, padding_top, padding_bottom);
 	}
 
 	return flag_hit;
@@ -462,19 +438,19 @@ int UpdateGameObjectCollisionBallLeftRight(void)
 
 	// ボール・左右壁当たり判定
 	{
-		float padding_left = SCREEN_LEFT + (BALL_SIZE / 2);
-		float padding_right = SCREEN_RIGHT - (BALL_SIZE / 2);
+		float padding_left = SCREEN_LEFT + (g_ball.size.x / 2);
+		float padding_right = SCREEN_RIGHT - (g_ball.size.x / 2);
 
 		// 画面外に出たときの処理
-		if (g_ball_pos_x < padding_left || padding_right <= g_ball_pos_x)
+		if (g_ball.pos.x < padding_left || padding_right <= g_ball.pos.x)
 		{
-			g_ball_vel_x *= -1.f;
+			g_ball.vel.x *= -1.f;
 
 			flag_hit = 1;
 		}
 
 		// 壁にめり込まないように調整
-		g_ball_pos_x = ClampF(g_ball_pos_x, padding_left, padding_right);
+		g_ball.pos.x = ClampF(g_ball.pos.x, padding_left, padding_right);
 	}
 
 	return flag_hit;
@@ -488,24 +464,24 @@ int UpdateGameObjectCollisionBallLeftRightScoring(void)
 
 	// パドル・左右壁当たり判定
 	{
-		float padding_left = SCREEN_LEFT + (BALL_SIZE / 2);
-		float padding_right = SCREEN_RIGHT - (BALL_SIZE / 2);
+		float padding_left = SCREEN_LEFT + (g_ball.size.x / 2);
+		float padding_right = SCREEN_RIGHT - (g_ball.size.x / 2);
 
-		if (g_ball_pos_x < padding_left || padding_right <= g_ball_pos_x)
+		if (g_ball.pos.x < padding_left || padding_right <= g_ball.pos.x)
 		{
 			// 得点処理
-			if (g_ball_pos_x < padding_left)
+			if (g_ball.pos.x < padding_left)
 				g_score2++;
-			if (padding_right <= g_ball_pos_x)
+			if (padding_right <= g_ball.pos.x)
 				g_score1++;
 
 			if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
 			{
 				// 初期化ボール座標
-				g_ball_pos_x = (float)(SCREEN_CENTER_X);
+				g_ball.pos.x = (float)(SCREEN_CENTER_X);
 				// 初期化ボール速度
-				g_ball_vel_y = -BALL_VEL_Y;
-				g_ball_vel_x = BALL_VEL_X_MIN;
+				g_ball.vel.y = -BALL_VEL_Y;
+				g_ball.vel.x = BALL_VEL_X_MIN;
 
 				// シーンをデモに変更
 				g_game_state = STATE_DEMO;
@@ -529,29 +505,29 @@ int UpdateGameObjectCollisionBallPaddle(void)
 
 	// ボール・パドル当たり判定
 	{
-		if (IsHit(g_ball_pos_x, g_ball_pos_y, g_paddle1_pos_x, g_paddle1_pos_y))
+		if (IsHit(g_ball.pos.x, g_ball.pos.y, g_paddle1.pos.x, g_paddle1.pos.y))
 		{
-			g_ball_vel_x = GetVelXFromPaddleVelY(-g_ball_vel_x, g_paddle1_vel_y);
+			g_ball.vel.x = GetVelXFromPaddleVelY(-g_ball.vel.x, g_paddle1.vel.y);
 
-			g_ball_vel_y = GetVelYFromPaddlePosY(g_ball_pos_y, g_paddle1_pos_y);
+			g_ball.vel.y = GetVelYFromPaddlePosY(g_ball.pos.y, g_paddle1.pos.y);
 
-			if (g_ball_vel_x < 0)
-				g_ball_pos_x = g_paddle1_pos_x - PADDLE_WIDTH / 2 - BALL_SIZE / 2;
+			if (g_ball.vel.x < 0)
+				g_ball.pos.x = g_paddle1.pos.x - g_paddle1.size.x / 2 - g_ball.size.x / 2;
 			else
-				g_ball_pos_x = g_paddle1_pos_x + PADDLE_WIDTH / 2 + BALL_SIZE / 2;
+				g_ball.pos.x = g_paddle1.pos.x + g_paddle1.size.x / 2 + g_ball.size.x / 2;
 
 			flag_hit = 1;
 		}
-		else if (IsHit(g_ball_pos_x, g_ball_pos_y, g_paddle2_pos_x, g_paddle2_pos_y))
+		else if (IsHit(g_ball.pos.x, g_ball.pos.y, g_paddle2.pos.x, g_paddle2.pos.y))
 		{
-			g_ball_vel_x = GetVelXFromPaddleVelY(-g_ball_vel_x, g_paddle2_vel_y);
+			g_ball.vel.x = GetVelXFromPaddleVelY(-g_ball.vel.x, g_paddle2.vel.y);
 
-			g_ball_vel_y = GetVelYFromPaddlePosY(g_ball_pos_y, g_paddle2_pos_y);
+			g_ball.vel.y = GetVelYFromPaddlePosY(g_ball.pos.y, g_paddle2.pos.y);
 
-			if (g_ball_vel_x < 0)
-				g_ball_pos_x = g_paddle2_pos_x - PADDLE_WIDTH / 2 - BALL_SIZE / 2;
+			if (g_ball.vel.x < 0)
+				g_ball.pos.x = g_paddle2.pos.x - PADDLE_WIDTH / 2 - g_ball.size.x / 2;
 			else
-				g_ball_pos_x = g_paddle2_pos_x + PADDLE_WIDTH / 2 + BALL_SIZE / 2;
+				g_ball.pos.x = g_paddle2.pos.x + PADDLE_WIDTH / 2 + g_ball.size.x / 2;
 
 			flag_hit = 1;
 		}
@@ -569,10 +545,10 @@ void UpdateGameObjectCollisionPaddleTopBottom(void)
 	float padding_bottom = SCREEN_BOTTOM - (PADDLE_HEIGHT / 2);
 
 	// 壁にめり込まないように調整
-	g_paddle1_pos_y = ClampF(g_paddle1_pos_y, padding_top, padding_bottom);
+	g_paddle1.pos.y = ClampF(g_paddle1.pos.y, padding_top, padding_bottom);
 
 	// 壁にめり込まないように調整
-	g_paddle2_pos_y = ClampF(g_paddle2_pos_y, padding_top, padding_bottom);
+	g_paddle2.pos.y = ClampF(g_paddle2.pos.y, padding_top, padding_bottom);
 }
 
 //----------------------------------------------------------------------
@@ -587,10 +563,10 @@ void UpdateGameObjectCollisionPaddleTopBottom(void)
 //----------------------------------------------------------------------
 int IsHit(float ball_pos_x, float ball_pos_y, float paddle_pos_x, float paddle_pos_y)
 {
-	float b_x1 = ball_pos_x - BALL_SIZE / 2;
-	float b_y1 = ball_pos_y - BALL_SIZE / 2;
-	float b_x2 = ball_pos_x + BALL_SIZE / 2;
-	float b_y2 = ball_pos_y + BALL_SIZE / 2;
+	float b_x1 = ball_pos_x - g_ball.size.x / 2;
+	float b_y1 = ball_pos_y - g_ball.size.y / 2;
+	float b_x2 = ball_pos_x + g_ball.size.x / 2;
+	float b_y2 = ball_pos_y + g_ball.size.x / 2;
 
 	float p_x1 = paddle_pos_x - PADDLE_WIDTH / 2;
 	float p_y1 = paddle_pos_y - PADDLE_HEIGHT / 2;
@@ -627,19 +603,19 @@ float GetTargetY(float paddle_enemy_pos_x, float paddle_myself_pos_x, int k)
 
 	// ボール、パドルサイズを考慮した敵パドル、自パドルのX座標
 	{
-		enemy_pos_x = paddle_myself_pos_x - k * (BALL_SIZE / 2 + PADDLE_WIDTH / 2);
-		myself_pos_x = paddle_enemy_pos_x + k * (BALL_SIZE / 2 + PADDLE_WIDTH / 2);
+		enemy_pos_x = paddle_myself_pos_x - k * (g_ball.size.x / 2 + PADDLE_WIDTH / 2);
+		myself_pos_x = paddle_enemy_pos_x + k * (g_ball.size.x / 2 + PADDLE_WIDTH / 2);
 	}
 
 	{
 		// ボールから何pxで自パドルに到着するのかを算出
 		{
 			length_x = 0;
-			if (k*g_ball_vel_x > 0)
+			if (k*g_ball.vel.x > 0)
 			{
 				// ボールが右に進んでいるとき 自分→敵→自分
 				// ボール～敵までの距離 (行き)
-				length_x += k * (enemy_pos_x - g_ball_pos_x);
+				length_x += k * (enemy_pos_x - g_ball.pos.x);
 				// 敵～自分の距離 (帰り)
 				length_x += k * (enemy_pos_x - myself_pos_x);
 			}
@@ -647,13 +623,13 @@ float GetTargetY(float paddle_enemy_pos_x, float paddle_myself_pos_x, int k)
 			{
 				// ボールが左に進んでいるとき 敵→自分
 				// ボール～自分までの距離
-				length_x += k * (g_ball_pos_x - myself_pos_x);
+				length_x += k * (g_ball.pos.x - myself_pos_x);
 			}
 		}
 
 		// 跳ね返りを無視したとき、自パドルに到着時ボールのY座標
 		{
-			length_y = length_x / g_ball_vel_x * g_ball_vel_y;
+			length_y = length_x / g_ball.vel.x * g_ball.vel.y;
 			if (length_y < 0)
 				length_y *= -1; // 絶対値
 		}
@@ -661,8 +637,8 @@ float GetTargetY(float paddle_enemy_pos_x, float paddle_myself_pos_x, int k)
 
 	// ボールのY座標
 	{
-		ball_base_y = g_ball_pos_y;
-		if (g_ball_vel_y < 0)
+		ball_base_y = g_ball.pos.y;
+		if (g_ball.vel.y < 0)
 			ball_base_y *= -1; // 速度が上向きのとき、上にターゲットが存在する
 	}
 
@@ -671,8 +647,8 @@ float GetTargetY(float paddle_enemy_pos_x, float paddle_myself_pos_x, int k)
 
 	{
 		// ボールサイズを考慮した上下の壁
-		screen_bottom_y = SCREEN_BOTTOM - BALL_SIZE / 2;
-		screen_top_y = SCREEN_TOP + BALL_SIZE / 2;
+		screen_bottom_y = SCREEN_BOTTOM - g_ball.size.y / 2;
+		screen_top_y = SCREEN_TOP + g_ball.size.y / 2;
 		// ボールサイズを考慮したボールの移動範囲
 		screen_height = screen_bottom_y - screen_top_y;
 	}
@@ -735,8 +711,8 @@ float GetVelXFromPaddleVelY(float ball_vel_x, float paddle_vel_y)
 //----------------------------------------------------------------------
 float GetVelYFromPaddlePosY(float ball_pos_y, float paddle_pos_y)
 {
-	float range_top = paddle_pos_y - (PADDLE_HEIGHT / 2 - BALL_SIZE / 2);
-	float range_bottom = paddle_pos_y + (PADDLE_HEIGHT / 2 - BALL_SIZE / 2);
+	float range_top = paddle_pos_y - (PADDLE_HEIGHT / 2 - g_ball.size.y / 2);
+	float range_bottom = paddle_pos_y + (PADDLE_HEIGHT / 2 - g_ball.size.y / 2);
 	float range_height = range_bottom - range_top;
 
 	return ((((ball_pos_y - range_top) / range_height) * 2 - 1)*BALL_VEL_Y);
@@ -818,23 +794,23 @@ void RenderGameObjectScore(void)
 void RenderGameObjectPaddleGuide(void)
 {
 	// ガイド表示
-	RenderObj(g_paddle1_target_pos_x, g_paddle1_target_pos_y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
-	RenderObj(g_paddle2_target_pos_x, g_paddle2_target_pos_y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
+	RenderObj(g_paddle1_target_pos.x, g_paddle1_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
+	RenderObj(g_paddle2_target_pos.x, g_paddle2_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
 }
 
 // <ゲームの描画処理:パドル> -------------------------------------------
 void RenderGameObjectPaddle(void)
 {
 	// パドル表示
-	RenderObj(g_paddle1_pos_x, g_paddle1_pos_y, PADDLE_WIDTH, PADDLE_HEIGHT, COLOR_WHITE);
-	RenderObj(g_paddle2_pos_x, g_paddle2_pos_y, PADDLE_WIDTH, PADDLE_HEIGHT, COLOR_WHITE);
+	RenderObj(g_paddle1.pos.x, g_paddle1.pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, COLOR_WHITE);
+	RenderObj(g_paddle2.pos.x, g_paddle2.pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, COLOR_WHITE);
 }
 
 // <ゲームの描画処理:ボール> -------------------------------------------
 void RenderGameObjectBall(void)
 {
 	// ボール表示
-	RenderObj(g_ball_pos_x, g_ball_pos_y, BALL_SIZE, BALL_SIZE, COLOR_WHITE);
+	RenderObj(g_ball.pos.x, g_ball.pos.y, BALL_SIZE, BALL_SIZE, COLOR_WHITE);
 }
 
 //----------------------------------------------------------------------

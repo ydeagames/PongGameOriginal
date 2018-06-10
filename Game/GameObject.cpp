@@ -4,13 +4,9 @@
 // 定数の定義 ==============================================================
 
 // <ボール>
-#define BALL_VEL_X_MAX 5	// パドルが移動している状態でボールにあたった時の速度
-#define BALL_VEL_X_MIN 3	// パドルが静止している状態でボールにあたった時の速度
-#define BALL_VEL_Y 4.5f		// Yの最大速度
 #define BALL_SIZE 8
 
 // <パドル>
-#define PADDLE_VEL 8		// パドルの速度
 #define PADDLE_WIDTH  8
 #define PADDLE_HEIGHT 28
 
@@ -22,6 +18,13 @@
 GameObject GameObject_Create(Vec2 pos, Vec2 vel, Vec2 size)
 {
 	return { pos, vel, size };
+}
+
+// <オブジェクト座標更新>
+void GameObject_UpdatePosition(GameObject* obj)
+{
+	obj->pos.x += obj->vel.x;
+	obj->pos.y += obj->vel.y;
 }
 
 // <オブジェクト左位置セット>
@@ -46,6 +49,30 @@ void GameObject_SetTop(GameObject* obj, float top, float padding)
 void GameObject_SetBottom(GameObject* obj, float bottom, float padding)
 {
 	obj->pos.y = bottom - (padding + obj->size.y / 2.f);
+}
+
+// <オブジェクト左位置ゲット>
+float GameObject_GetLeft(GameObject* obj, float padding)
+{
+	return obj->pos.x - (padding + obj->size.x / 2.f);
+}
+
+// <オブジェクト左位置ゲット>
+float GameObject_GetRight(GameObject* obj, float padding)
+{
+	return obj->pos.x + (padding + obj->size.x / 2.f);
+}
+
+// <オブジェクト左位置ゲット>
+float GameObject_GetTop(GameObject* obj, float padding)
+{
+	return obj->pos.y - (padding + obj->size.y / 2.f);
+}
+
+// <オブジェクト左位置ゲット>
+float GameObject_GetBottom(GameObject* obj, float padding)
+{
+	return obj->pos.y + (padding + obj->size.y / 2.f);
 }
 
 // <<ボールオブジェクト>> ----------------------------------------------
