@@ -1,24 +1,15 @@
 #pragma once
-struct Vec2
+
+// 構造体の宣言 ============================================================
+
+// <ベクトル>
+typedef struct
 {
-	float x, y;
+	float x;	// X座標
+	float y;	// Y座標
+} Vec2;
 
-	constexpr Vec2(float x = 0.f, float y = 0.f);
+// 関数の宣言 ==============================================================
 
-	float Vec2::length() const;
-	constexpr float Vec2::lengthSquare() const;
-	constexpr float Vec2::dot(const Vec2& other) const;
-	float Vec2::distanceFrom(const Vec2& other) const;
-	Vec2 Vec2::normalized() const;
-	constexpr bool Vec2::isZero() const;
-	constexpr Vec2 operator +() const;
-	constexpr Vec2 operator -() const;
-	constexpr Vec2 operator +(const Vec2 &other) const;
-	constexpr Vec2 operator -(const Vec2 &other) const;
-	constexpr Vec2 operator *(float s) const;
-	constexpr Vec2 operator /(float s) const;
-	Vec2& operator +=(const Vec2& other);
-	Vec2& operator -=(const Vec2& other);
-	Vec2& operator *=(float s);
-	Vec2& operator /=(float s);
-};
+// <ベクトル作成>
+Vec2 Vec2_Create(float x, float y);
