@@ -42,9 +42,9 @@ enum GameState
 #define FONT_SIZE_SCORE 100
 
 // <サウンド> ----------------------------------------------------------
-#define SOUND_SE01 "Resources\\Sounds\\SE01.ogg"
-#define SOUND_SE02 "Resources\\Sounds\\SE02.ogg"
-#define SOUND_SE03 "Resources\\Sounds\\SE03.ogg"
+#define SOUND_SE01 "Resources\\Audio\\SE01.ogg"
+#define SOUND_SE02 "Resources\\Audio\\SE02.ogg"
+#define SOUND_SE03 "Resources\\Audio\\SE03.ogg"
 
 // <サーブ待機> --------------------------------------------------------
 #define SERVE_WAIT_TIME 2*60
