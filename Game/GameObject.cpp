@@ -3,7 +3,21 @@
 
 // 定数の定義 ==============================================================
 
+// <ボール>
+#define BALL_SIZE 8
+
+// <パドル>
+#define PADDLE_WIDTH  8
+#define PADDLE_HEIGHT 28
+
+// 関数の宣言 ==============================================================
+
+
+
 // 関数の定義 ==============================================================
+
+float GameObject_Paddle_GetBallVelX(float ball_vel_x, float paddle_vel_y);
+float GameObject_Paddle_GetBallVelY(float ball_pos_y, float paddle_pos_y);
 
 // <<オブジェクト>> ----------------------------------------------------
 
@@ -20,62 +34,70 @@ void GameObject_UpdatePosition(GameObject* obj)
 	obj->pos.y += obj->vel.y;
 }
 
-// <オブジェクト左位置セット>
-void GameObject_SetLeft(GameObject* obj, float left, float padding)
+// <オブジェクトXオフセット>
+float GameObject_OffsetX(GameObject* obj, ObjectSide side, float pos, float padding)
 {
-	obj->pos.x = left + (padding + obj->size.x / 2.f);
+	float offset = 0;
+	switch (side)
+	{
+	case LEFT:
+		offset = (padding + obj->size.x / 2.f);
+		break;
+	case RIGHT:
+		offset = -(padding + obj->size.x / 2.f);
+		break;
+	}
+	return pos + offset;
 }
 
-// <オブジェクト右位置セット>
-void GameObject_SetRight(GameObject* obj, float right, float padding)
+// <オブジェクトXオフセット>
+float GameObject_OffsetY(GameObject* obj, ObjectSide side, float pos, float padding)
 {
-	obj->pos.x = right - (padding + obj->size.x / 2.f);
+	float offset = 0;
+	switch (side)
+	{
+	case TOP:
+		offset = (padding + obj->size.y / 2.f);
+		break;
+	case BOTTOM:
+		offset = -(padding + obj->size.y / 2.f);
+		break;
+	}
+	return pos + offset;
 }
 
-// <オブジェクト上位置セット>
-void GameObject_SetTop(GameObject* obj, float top, float padding)
+// <オブジェクトX位置セット>
+void GameObject_SetX(GameObject* obj, ObjectSide side, float pos, float padding)
 {
-	obj->pos.y = top + (padding + obj->size.y / 2.f);
+	obj->pos.x = GameObject_OffsetX(obj, side, pos, padding);
 }
 
-// <オブジェクト下位置セット>
-void GameObject_SetBottom(GameObject* obj, float bottom, float padding)
+// <オブジェクトY位置セット>
+void GameObject_SetY(GameObject* obj, ObjectSide side, float pos, float padding)
 {
-	obj->pos.y = bottom - (padding + obj->size.y / 2.f);
+	obj->pos.y = GameObject_OffsetY(obj, side, pos, padding);
 }
 
-// <オブジェクト左位置ゲット>
-float GameObject_GetLeft(GameObject* obj, float padding)
+// <オブジェクトX位置ゲット>
+float GameObject_GetX(GameObject* obj, ObjectSide side, float padding)
 {
-	return obj->pos.x - (padding + obj->size.x / 2.f);
+	return GameObject_OffsetX(obj, side, obj->pos.x, padding);
 }
 
-// <オブジェクト右位置ゲット>
-float GameObject_GetRight(GameObject* obj, float padding)
+// <オブジェクトY位置ゲット>
+float GameObject_GetY(GameObject* obj, ObjectSide side, float padding)
 {
-	return obj->pos.x + (padding + obj->size.x / 2.f);
-}
-
-// <オブジェクト上位置ゲット>
-float GameObject_GetTop(GameObject* obj, float padding)
-{
-	return obj->pos.y - (padding + obj->size.y / 2.f);
-}
-
-// <オブジェクト下位置ゲット>
-float GameObject_GetBottom(GameObject* obj, float padding)
-{
-	return obj->pos.y + (padding + obj->size.y / 2.f);
+	return GameObject_OffsetY(obj, side, obj->pos.y, padding);
 }
 
 // <オブジェクト当たり判定>
 BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2)
 {
 	return (
-		GameObject_GetLeft(obj2) < GameObject_GetRight(obj1) &&
-		GameObject_GetLeft(obj1) < GameObject_GetRight(obj2) &&
-		GameObject_GetTop(obj2) < GameObject_GetBottom(obj1) &&
-		GameObject_GetTop(obj1) < GameObject_GetBottom(obj2)
+		GameObject_GetX(obj2, LEFT) < GameObject_GetX(obj1, RIGHT) &&
+		GameObject_GetX(obj1, LEFT) < GameObject_GetX(obj2, RIGHT) &&
+		GameObject_GetY(obj2, TOP) < GameObject_GetY(obj1, BOTTOM) &&
+		GameObject_GetY(obj1, TOP) < GameObject_GetY(obj2, BOTTOM)
 	);
 }
 
@@ -116,5 +138,112 @@ GameObject GameObject_Paddle_Create(void)
 // <パドルオブジェクト座標Yデフォルト>
 void GameObject_Paddle_SetPosYDefault(GameObject* obj)
 {
-	GameObject_SetBottom(obj, SCREEN_BOTTOM, 16);
+	GameObject_SetY(obj, BOTTOM, SCREEN_BOTTOM, 16);
+}
+
+// <パドルオブジェクトボール衝突処理>
+BOOL GameObject_Paddle_CollisionBall(GameObject* paddle, GameObject* ball)
+{
+	if (GameObject_IsHit(ball, paddle))
+	{
+		ball->vel.x *= -1;
+		ball->vel.x = GameObject_Paddle_GetBallVelX(paddle, ball);
+
+		ball->vel.y = GameObject_Paddle_GetBallVelY(paddle, ball);
+
+		if (ball->vel.x < 0)
+			ball->pos.x = paddle->pos.x - paddle->size.x / 2 - ball->size.x / 2;
+		else
+			ball->pos.x = paddle->pos.x + paddle->size.x / 2 + ball->size.x / 2;
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+// <パドルの速度からボールX速度を求める>
+float GameObject_Paddle_GetBallVelX(GameObject* paddle, GameObject* ball)
+{
+	float ball_vel_diff_x, ball_vel_new_x;
+
+	ball_vel_diff_x = paddle->vel.y / PADDLE_VEL * (BALL_VEL_X_MAX - BALL_VEL_X_MIN);
+	if (ball_vel_diff_x < 0)
+		ball_vel_diff_x *= -1;
+	ball_vel_new_x = ball_vel_diff_x + BALL_VEL_X_MIN;
+	if (ball_vel_x < 0)
+		ball_vel_new_x *= -1;
+
+	return ball_vel_new_x;
+}
+
+// <パドルにあたった位置からボールY速度を求める>
+float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball)
+{
+	float range_top = paddle->pos.y - (paddle->size.y / 2 - ball->size.y / 2);
+	float range_bottom = paddle->pos.y + (paddle->size.y / 2 - ball->size.y / 2);
+	float range_height = range_bottom - range_top;
+
+	return ((((paddle->pos.y - range_top) / range_height) * 2 - 1)*BALL_VEL_Y);
+}
+
+// <<フィールドオブジェクト>> ------------------------------------------
+
+// <フィールド上下衝突処理>
+ObjectSide GameObject_Field_CollisionVertical(GameObject* field, GameObject* obj, BOOL flag_with_bounce)
+{
+	// ヒットフラグ
+	ObjectSide flag_hit = FALSE;
+
+	// ボール・上下壁当たり判定
+	{
+		float padding_top = GameObject_OffsetY(obj, TOP, GameObject_GetY(field, TOP));
+		float padding_bottom = GameObject_OffsetY(obj, BOTTOM, GameObject_GetY(field, BOTTOM));
+
+		if (flag_with_bounce)
+		{
+			// 画面外に出たときの処理
+			if (obj->pos.y < padding_top || padding_bottom <= obj->pos.y)
+			{
+				obj->vel.y *= -1.f;
+
+				if (obj->pos.y < padding_top)
+				flag_hit = TRUE;
+			}
+		}
+
+		// 壁にめり込まないように調整
+		g_ball.pos.y = ClampF(g_ball.pos.y, padding_top, padding_bottom);
+	}
+
+	return flag_hit;
+}
+
+// <フィールド左右衝突処理>
+int GameObject_Field_CollisionHorizontal(BOOL flag_with_bounce)
+{
+	// ヒットフラグ
+	BOOL flag_hit = FALSE;
+
+	// ボール・左右壁当たり判定
+	{
+		float padding_left = SCREEN_LEFT + (g_ball.size.x / 2);
+		float padding_right = SCREEN_RIGHT - (g_ball.size.x / 2);
+
+		if (flag_with_bounce)
+		{
+			// 画面外に出たときの処理
+			if (g_ball.pos.x < padding_left || padding_right <= g_ball.pos.x)
+			{
+				g_ball.vel.x *= -1.f;
+
+				flag_hit = TRUE;
+			}
+		}
+
+		// 壁にめり込まないように調整
+		g_ball.pos.x = ClampF(g_ball.pos.x, padding_left, padding_right);
+	}
+
+	return flag_hit;
 }

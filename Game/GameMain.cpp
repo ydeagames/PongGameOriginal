@@ -100,8 +100,8 @@ int UpdateGameObjectCollisionBallPaddle(void);
 void UpdateGameObjectCollisionPaddleTopBottom(void);
 
 // <ゲームの更新処理:ユーティリティ> -----------------------------------
-float GetVelXFromPaddleVelY(float ball_vel_x, float paddle_vel_y);
-float GetVelYFromPaddlePosY(float ball_pos_y, float paddle_pos_y);
+float GameObject_Paddle_GetBallVelX(float ball_vel_x, float paddle_vel_y);
+float GameObject_Paddle_GetVelYFromPaddlePosY(float ball_pos_y, float paddle_pos_y);
 
 // <ゲームの描画処理> --------------------------------------------------
 void RenderGameSceneDemo(void);
@@ -285,190 +285,37 @@ void UpdateGameScenePlay(void)
 	UpdateGameObjectCollisionPaddleTopBottom();
 }
 
-// <ゲームの更新処理:衝突:ボール×壁上下> ------------------------------
-int UpdateGameObjectCollisionBallTopBottom(void)
+// <>
+void UpdateGameScore()
 {
-	// ヒットフラグ
-	int flag_hit = 0;
+	// 得点処理
+	if (g_ball.pos.x < padding_left)
+		g_score2++;
+	if (padding_right <= g_ball.pos.x)
+		g_score1++;
 
-	// ボール・上下壁当たり判定
+	if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
 	{
-		float padding_top = SCREEN_TOP + (g_ball.size.y / 2);
-		float padding_bottom = SCREEN_BOTTOM - (g_ball.size.y / 2);
+		// 初期化ボール座標
+		g_ball.pos.x = (float)(SCREEN_CENTER_X);
+		// 初期化ボール速度
+		g_ball.vel.y = -BALL_VEL_Y;
+		g_ball.vel.x = BALL_VEL_X_MIN;
 
-		// 画面外に出たときの処理
-		if (g_ball.pos.y < padding_top || padding_bottom <= g_ball.pos.y)
-		{
-			g_ball.vel.y *= -1.f;
-
-			flag_hit = 1;
-		}
-
-		// 壁にめり込まないように調整
-		g_ball.pos.y = ClampF(g_ball.pos.y, padding_top, padding_bottom);
+		// シーンをデモに変更
+		g_game_state = STATE_DEMO;
 	}
-
-	return flag_hit;
-}
-
-// <ゲームの更新処理:衝突:ボール×壁左右> ------------------------------
-int UpdateGameObjectCollisionBallLeftRight(void)
-{
-	// ヒットフラグ
-	int flag_hit = 0;
-
-	// ボール・左右壁当たり判定
-	{
-		float padding_left = SCREEN_LEFT + (g_ball.size.x / 2);
-		float padding_right = SCREEN_RIGHT - (g_ball.size.x / 2);
-
-		// 画面外に出たときの処理
-		if (g_ball.pos.x < padding_left || padding_right <= g_ball.pos.x)
-		{
-			g_ball.vel.x *= -1.f;
-
-			flag_hit = 1;
-		}
-
-		// 壁にめり込まないように調整
-		g_ball.pos.x = ClampF(g_ball.pos.x, padding_left, padding_right);
-	}
-
-	return flag_hit;
-}
-
-// <ゲームの更新処理:衝突:ボール×壁左右(スコア)> ----------------------
-int UpdateGameObjectCollisionBallLeftRightScoring(void)
-{
-	// ヒットフラグ
-	int flag_hit = 0;
-
-	// パドル・左右壁当たり判定
-	{
-		float padding_left = SCREEN_LEFT + (g_ball.size.x / 2);
-		float padding_right = SCREEN_RIGHT - (g_ball.size.x / 2);
-
-		if (g_ball.pos.x < padding_left || padding_right <= g_ball.pos.x)
-		{
-			// 得点処理
-			if (g_ball.pos.x < padding_left)
-				g_score2++;
-			if (padding_right <= g_ball.pos.x)
-				g_score1++;
-
-			if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
-			{
-				// 初期化ボール座標
-				g_ball.pos.x = (float)(SCREEN_CENTER_X);
-				// 初期化ボール速度
-				g_ball.vel.y = -BALL_VEL_Y;
-				g_ball.vel.x = BALL_VEL_X_MIN;
-
-				// シーンをデモに変更
-				g_game_state = STATE_DEMO;
-			}
-			else
-				// シーンをサーブに変更
-				g_game_state = STATE_SERVE;
-
-			flag_hit = 1;
-		}
-	}
-
-	return flag_hit;
+	else
+		// シーンをサーブに変更
+		g_game_state = STATE_SERVE;
 }
 
 // <ゲームの更新処理:衝突:パドル×ボール> ------------------------------
 int UpdateGameObjectCollisionBallPaddle(void)
 {
-	// ヒットフラグ
-	int flag_hit = 0;
-
-	// ボール・パドル当たり判定
-	{
-		if (GameObject_IsHit(&g_ball, &g_paddle1))
-		{
-			g_ball.vel.x = GetVelXFromPaddleVelY(-g_ball.vel.x, g_paddle1.vel.y);
-
-			g_ball.vel.y = GetVelYFromPaddlePosY(g_ball.pos.y, g_paddle1.pos.y);
-
-			if (g_ball.vel.x < 0)
-				g_ball.pos.x = g_paddle1.pos.x - g_paddle1.size.x / 2 - g_ball.size.x / 2;
-			else
-				g_ball.pos.x = g_paddle1.pos.x + g_paddle1.size.x / 2 + g_ball.size.x / 2;
-
-			flag_hit = 1;
-		}
-		else if (GameObject_IsHit(&g_ball, &g_paddle2))
-		{
-			g_ball.vel.x = GetVelXFromPaddleVelY(-g_ball.vel.x, g_paddle2.vel.y);
-
-			g_ball.vel.y = GetVelYFromPaddlePosY(g_ball.pos.y, g_paddle2.pos.y);
-
-			if (g_ball.vel.x < 0)
-				g_ball.pos.x = g_paddle2.pos.x - PADDLE_WIDTH / 2 - g_ball.size.x / 2;
-			else
-				g_ball.pos.x = g_paddle2.pos.x + PADDLE_WIDTH / 2 + g_ball.size.x / 2;
-
-			flag_hit = 1;
-		}
-	}
-
-	return flag_hit;
-}
-
-// <ゲームの更新処理:衝突:ボール×パドル> ------------------------------
-void UpdateGameObjectCollisionPaddleTopBottom(void)
-{
-	// パドル・上下壁当たり判定
-
-	float padding_top = SCREEN_TOP + (PADDLE_HEIGHT / 2);
-	float padding_bottom = SCREEN_BOTTOM - (PADDLE_HEIGHT / 2);
-
-	// 壁にめり込まないように調整
-	g_paddle1.pos.y = ClampF(g_paddle1.pos.y, padding_top, padding_bottom);
-
-	// 壁にめり込まないように調整
-	g_paddle2.pos.y = ClampF(g_paddle2.pos.y, padding_top, padding_bottom);
-}
-
-//----------------------------------------------------------------------
-//! @brief パドルの速度からボールX速度を求める
-//!
-//! @param[ball_vel_x] 現在のボールのX速度
-//! @param[paddle_vel_y] パドルのY速度
-//!
-//! @return 新しいボールのX速度
-//----------------------------------------------------------------------
-float GetVelXFromPaddleVelY(float ball_vel_x, float paddle_vel_y)
-{
-	float ball_vel_diff_x, ball_vel_new_x;
-
-	ball_vel_diff_x = paddle_vel_y / PADDLE_VEL * (BALL_VEL_X_MAX - BALL_VEL_X_MIN);
-	if (ball_vel_diff_x < 0)
-		ball_vel_diff_x *= -1;
-	ball_vel_new_x = ball_vel_diff_x + BALL_VEL_X_MIN;
-	if (ball_vel_x < 0)
-		ball_vel_new_x *= -1;
-
-	return ball_vel_new_x;
-}
-
-//----------------------------------------------------------------------
-//! @brief パドルにあたった位置からボールY速度を求める
-//!
-//! @param[ball_pos_y] ボールのY座標
-//! @param[paddle_pos_y] パドルのY座標
-//!
-//! @return 新しいボールのY速度
-//----------------------------------------------------------------------
-float GetVelYFromPaddlePosY(float ball_pos_y, float paddle_pos_y)
-{
-	float range_top = paddle_pos_y - (PADDLE_HEIGHT / 2 - g_ball.size.y / 2);
-	float range_bottom = paddle_pos_y + (PADDLE_HEIGHT / 2 - g_ball.size.y / 2);
-	float range_height = range_bottom - range_top;
-
-	return ((((ball_pos_y - range_top) / range_height) * 2 - 1)*BALL_VEL_Y);
+	return
+		GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball) ||
+		GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball);
 }
 
 //----------------------------------------------------------------------

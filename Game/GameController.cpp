@@ -5,7 +5,7 @@
 
 void GameController_Player_Update(GameController* ctrl);
 void GameController_Bot_Update(GameController* ctrl);
-float GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy);
+float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy);
 
 // 関数の定義 ==============================================================
 
@@ -38,7 +38,6 @@ void GameController_Player_Update(GameController* ctrl)
 		ctrl->object->vel.y += PADDLE_VEL;
 }
 
-
 // <<Botコントローラー>> -----------------------------------------------
 
 // Bot自動操作
@@ -59,7 +58,7 @@ void GameController_Bot_Update(GameController* ctrl)
 
 	int k = (ctrl->object->pos.x < ctrl->bot_enemy->pos.x) ? 1 : -1;
 
-	ctrl->bot_target_pos.y = GetTargetY(ctrl->bot_ball, ctrl->object, ctrl->bot_enemy);
+	ctrl->bot_target_pos.y = GameController_GetTargetY(ctrl->bot_ball, ctrl->object, ctrl->bot_enemy);
 
 	ctrl->object->vel.y = 0.f;
 
@@ -84,7 +83,7 @@ void GameController_Bot_Update(GameController* ctrl)
 }
 
 // <ボール着弾点予想アルゴリズム>
-float GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy)
+float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy)
 {
 	// ボール、パドルサイズを考慮した敵パドル、自パドルのX座標
 	float enemy_pos_x, myself_pos_x;

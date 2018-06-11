@@ -1,6 +1,19 @@
 #pragma once
 #include "Vec2.h"
 
+// 列挙型の定義 ============================================================
+
+// <シーン状態> --------------------------------------------------------
+enum ObjectSide
+{
+	CENTER_X,	// X中央
+	LEFT,		// 左
+	RIGHT,		// 右
+	CENTER_Y,	// Y中央
+	TOP,		// 上
+	BOTTOM		// 下
+};
+
 // 構造体の宣言 ============================================================
 
 // <ゲームオブジェクト>
@@ -21,13 +34,6 @@ typedef struct
 // <パドル>
 #define PADDLE_VEL 8		// パドルの速度
 
-// <ボール>
-#define BALL_SIZE 8
-
-// <パドル>
-#define PADDLE_WIDTH  8
-#define PADDLE_HEIGHT 28
-
 // 関数の宣言 ==============================================================
 
 // <<オブジェクト>> ----------------------------------------------------
@@ -38,29 +44,23 @@ GameObject GameObject_Create(Vec2 pos, Vec2 vel, Vec2 size);
 // <オブジェクト座標更新>
 void GameObject_UpdatePosition(GameObject* obj);
 
-// <オブジェクト左位置セット>
-void GameObject_SetLeft(GameObject* obj, float left, float padding = 0.f);
+// <オブジェクトXオフセット>
+float GameObject_OffsetX(GameObject* obj, ObjectSide side, float pos = 0.f, float padding = 0.f);
 
-// <オブジェクト右位置セット>
-void GameObject_SetRight(GameObject* obj, float right, float padding = 0.f);
+// <オブジェクトXオフセット>
+float GameObject_OffsetY(GameObject* obj, ObjectSide side, float pos = 0.f, float padding = 0.f);
 
-// <オブジェクト上位置セット>
-void GameObject_SetTop(GameObject* obj, float top, float padding = 0.f);
+// <オブジェクトX位置セット>
+void GameObject_SetX(GameObject* obj, ObjectSide side, float pos = 0.f, float padding = 0.f);
 
-// <オブジェクト下位置セット>
-void GameObject_SetBottom(GameObject* obj, float bottom, float padding = 0.f);
+// <オブジェクトY位置セット>
+void GameObject_SetY(GameObject* obj, ObjectSide side, float pos = 0.f, float padding = 0.f);
 
-// <オブジェクト左位置ゲット>
-float GameObject_GetLeft(GameObject* obj, float padding = 0.f);
+// <オブジェクトX位置ゲット>
+float GameObject_GetX(GameObject* obj, ObjectSide side, float padding = 0.f);
 
-// <オブジェクト右位置ゲット>
-float GameObject_GetRight(GameObject* obj, float padding = 0.f);
-
-// <オブジェクト上位置ゲット>
-float GameObject_GetTop(GameObject* obj, float padding = 0.f);
-
-// <オブジェクト下位置ゲット>
-float GameObject_GetBottom(GameObject* obj, float padding = 0.f);
+// <オブジェクトY位置ゲット>
+float GameObject_GetY(GameObject* obj, ObjectSide side, float padding = 0.f);
 
 // <オブジェクト当たり判定>
 BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2);
@@ -86,3 +86,6 @@ GameObject GameObject_Paddle_Create(void);
 
 // <パドルオブジェクト座標Yデフォルト>
 void GameObject_Paddle_SetPosYDefault(GameObject* obj);
+
+// <パドルオブジェクトボール衝突処理>
+BOOL GameObject_Paddle_CollisionBall(GameObject* paddle, GameObject* ball);
