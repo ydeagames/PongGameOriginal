@@ -66,6 +66,9 @@ float GameObject_GetY(GameObject* obj, ObjectSide side, float padding = 0.f);
 // <オブジェクト当たり判定>
 BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2);
 
+// <オブジェクト描画>
+void GameObject_Render(GameObject* obj, unsigned int color);
+
 // <<ボールオブジェクト>> ----------------------------------------------
 
 // <ボールオブジェクト作成>
@@ -104,3 +107,6 @@ ObjectSide GameObject_Field_CollisionVertical(GameObject* field, GameObject* obj
 
 // <フィールド左右衝突処理>
 ObjectSide GameObject_Field_CollisionHorizontal(GameObject* field, GameObject* obj, BOOL flag_with_bounce);
+
+// <フィールド描画>
+void GameObject_Field_Render(GameObject* field);

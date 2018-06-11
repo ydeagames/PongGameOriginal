@@ -103,15 +103,10 @@ void RenderGameScenePlay(void);
 void UpdateGameScore(ObjectSide side);
 
 // <ゲームの描画処理:オブジェクト> -------------------------------------
-void RenderGameObjectField(void);
 void RenderGameObjectScore(void);
 void RenderGameObjectPaddleGuide(void);
 void RenderGameObjectPaddle(void);
 void RenderGameObjectBall(void);
-
-// <ゲームの描画処理:ユーティリティ> -----------------------------------
-void RenderObj(GameObject* obj, unsigned int color);
-
 
 // 関数の定義 ==============================================================
 
@@ -147,7 +142,7 @@ void InitializeGame(void)
 	g_paddle2 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_paddle2, LEFT, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle2);
-	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, PAD_INPUT_UP, PAD_INPUT_DOWN);
+	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, &g_ball, &g_paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 	// 得点
 	g_score1 = 0;
@@ -247,8 +242,8 @@ void UpdateGameSceneServe(void)
 	}
 
 	// 操作
-	g_paddle1_ctrl.UpdateControl(&g_paddle1_ctrl);
-	g_paddle2_ctrl.UpdateControl(&g_paddle2_ctrl);
+	GameController_Update(&g_paddle1_ctrl);
+	GameController_Update(&g_paddle2_ctrl);
 
 	// 座標更新
 	GameObject_UpdatePosition(&g_ball);
@@ -267,8 +262,8 @@ void UpdateGameSceneServe(void)
 void UpdateGameScenePlay(void)
 {
 	// 操作
-	g_paddle1_ctrl.UpdateControl(&g_paddle1_ctrl);
-	g_paddle2_ctrl.UpdateControl(&g_paddle2_ctrl);
+	GameController_Update(&g_paddle1_ctrl);
+	GameController_Update(&g_paddle2_ctrl);
 
 	// 座標更新
 	GameObject_UpdatePosition(&g_ball);
@@ -346,44 +341,50 @@ void RenderGame(void)
 // <ゲームの描画処理:シーン:デモ> ---------------------------------------------
 void RenderGameSceneDemo(void)
 {
-	// オブジェクト描画
-	RenderGameObjectField();
+	// <オブジェクト描画>
+	// フィールド描画
+	GameObject_Field_Render(&g_field);
+	// スコア描画
 	RenderGameObjectScore();
-	RenderGameObjectBall();
+	// ボール描画
+	GameObject_Render(&g_ball, COLOR_WHITE);
 }
 
 // <ゲームの描画処理:シーン:サーブ> -------------------------------------------
 void RenderGameSceneServe(void)
 {
-	// オブジェクト描画
-	RenderGameObjectField();
+	// <オブジェクト描画>
+	// フィールド描画
+	GameObject_Field_Render(&g_field);
+	// スコア描画
 	RenderGameObjectScore();
-	RenderGameObjectPaddle();
-	RenderGameObjectBall();
+	// パドル描画
+	GameObject_Render(&g_paddle1, COLOR_WHITE);
+	GameObject_Render(&g_paddle2, COLOR_WHITE);
+	// ボール描画
+	GameObject_Render(&g_ball, COLOR_WHITE);
 }
 
 // <ゲームの描画処理:シーン:プレイ> -------------------------------------------
 void RenderGameScenePlay(void)
 {
-	// オブジェクト描画
-	RenderGameObjectField();
+	// <オブジェクト描画>
+	// フィールド描画
+	GameObject_Field_Render(&g_field);
+	// スコア描画
 	RenderGameObjectScore();
 	RenderGameObjectPaddleGuide();
-	RenderGameObjectPaddle();
-	RenderGameObjectBall();
-}
-
-// <ゲームの描画処理:コート> -------------------------------------------
-void RenderGameObjectField(void)
-{
-	// コート表示
-	DrawDashedLine(SCREEN_CENTER_X, SCREEN_TOP, SCREEN_CENTER_X, SCREEN_BOTTOM, COLOR_WHITE, 8, 2);
+	// パドル描画
+	GameObject_Render(&g_paddle1, COLOR_WHITE);
+	GameObject_Render(&g_paddle2, COLOR_WHITE);
+	// ボール描画
+	GameObject_Render(&g_ball, COLOR_WHITE);
 }
 
 // <ゲームの描画処理:スコア> -------------------------------------------
 void RenderGameObjectScore(void)
 {
-	// スコア表示
+	// スコア描画
 
 	// フォントを使用した文字の幅を取得
 	int width_score1 = GetDrawFormatStringWidthToHandle(g_font, "%2d", g_score1);
@@ -398,33 +399,11 @@ void RenderGameObjectPaddleGuide(void)
 	// ガイド表示
 	GameObject paddle1_target = g_paddle1;
 	GameObject paddle2_target = g_paddle2;
-	paddle1_target.pos = g_paddle1_ctrl.bot_target_pos;
-	paddle2_target.pos = g_paddle2_ctrl.bot_target_pos;
-	RenderObj(&paddle1_target, 0x222222);
-	RenderObj(&paddle2_target, 0x222222);
+	paddle1_target.pos = g_paddle1_ctrl.target_pos;
+	paddle2_target.pos = g_paddle2_ctrl.target_pos;
+	GameObject_Render(&paddle1_target, 0x222222);
+	GameObject_Render(&paddle2_target, 0x222222);
 }
-
-// <ゲームの描画処理:パドル> -------------------------------------------
-void RenderGameObjectPaddle(void)
-{
-	// パドル表示
-	RenderObj(&g_paddle1, COLOR_WHITE);
-	RenderObj(&g_paddle2, COLOR_WHITE);
-}
-
-// <ゲームの描画処理:ボール> -------------------------------------------
-void RenderGameObjectBall(void)
-{
-	// ボール表示
-	RenderObj(&g_ball, COLOR_WHITE);
-}
-
-// <オブジェクト描画> --------------------------------------------------
-void RenderObj(GameObject* obj, unsigned int color)
-{
-	DrawBoxAA(GameObject_GetX(obj, LEFT), GameObject_GetY(obj, TOP), GameObject_GetX(obj, RIGHT), GameObject_GetY(obj, BOTTOM), color, TRUE);
-}
-
 
 //----------------------------------------------------------------------
 //! @brief ゲームの終了処理

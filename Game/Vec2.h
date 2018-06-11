@@ -12,4 +12,4 @@ typedef struct
 // ŠÖ”‚ÌéŒ¾ ==============================================================
 
 // <ƒxƒNƒgƒ‹ì¬>
-Vec2 Vec2_Create(float x, float y);
+Vec2 Vec2_Create(float x = 0.f, float y = 0.f);

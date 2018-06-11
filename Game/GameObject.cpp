@@ -96,7 +96,13 @@ BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2)
 		GameObject_GetX(obj1, LEFT) < GameObject_GetX(obj2, RIGHT) &&
 		GameObject_GetY(obj2, TOP) < GameObject_GetY(obj1, BOTTOM) &&
 		GameObject_GetY(obj1, TOP) < GameObject_GetY(obj2, BOTTOM)
-	);
+		);
+}
+
+// <オブジェクト描画>
+void GameObject_Render(GameObject* obj, unsigned int color)
+{
+	DrawBoxAA(GameObject_GetX(obj, LEFT), GameObject_GetY(obj, TOP), GameObject_GetX(obj, RIGHT), GameObject_GetY(obj, BOTTOM), color, TRUE);
 }
 
 // <<ボールオブジェクト>> ----------------------------------------------
@@ -104,7 +110,7 @@ BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2)
 // <ボールオブジェクト作成>
 GameObject GameObject_Ball_Create(void)
 {
-	return GameObject_Create({ 0, 0 }, { 0, 0 }, { BALL_SIZE, BALL_SIZE });
+	return GameObject_Create(Vec2_Create(), Vec2_Create(), Vec2_Create(BALL_SIZE, BALL_SIZE));
 }
 
 // <ボールオブジェクト座標Xデフォルト>
@@ -136,7 +142,7 @@ void GameObject_Ball_SetVelYDefault(GameObject* obj)
 // <パドルオブジェクト作成>
 GameObject GameObject_Paddle_Create(void)
 {
-	return GameObject_Create({ 0, 0 }, { 0, 0 }, { PADDLE_WIDTH, PADDLE_HEIGHT });
+	return GameObject_Create(Vec2_Create(), Vec2_Create(), Vec2_Create(PADDLE_WIDTH, PADDLE_HEIGHT));
 }
 
 // <パドルオブジェクト座標Yデフォルト>
@@ -196,7 +202,7 @@ float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball)
 // <ボールオブジェクト作成>
 GameObject GameObject_Field_Create(void)
 {
-	return GameObject_Create({ SCREEN_CENTER_X, SCREEN_CENTER_Y }, { 0, 0 }, { SCREEN_WIDTH, SCREEN_HEIGHT });
+	return GameObject_Create(Vec2_Create(SCREEN_CENTER_X, SCREEN_CENTER_Y), Vec2_Create(), Vec2_Create(SCREEN_WIDTH, SCREEN_HEIGHT));
 }
 
 // <フィールド上下衝突処理>
@@ -262,3 +268,11 @@ ObjectSide GameObject_Field_CollisionHorizontal(GameObject* field, GameObject* o
 
 	return side_hit;
 }
+
+// <フィールド描画>
+void GameObject_Field_Render(GameObject* field)
+{
+	// コート表示
+	DrawDashedLineAA(field->pos.x, GameObject_GetY(field, TOP), field->pos.x, GameObject_GetY(field, BOTTOM), COLOR_WHITE, 8, 2);
+}
+

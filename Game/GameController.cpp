@@ -5,81 +5,23 @@
 
 void GameController_Player_Update(GameController* ctrl);
 void GameController_Bot_Update(GameController* ctrl);
-float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy);
 
 // 関数の定義 ==============================================================
 
 // <<コントローラー>> --------------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Create(GameObject* object, void(*ctrlFunc)(GameController*))
+GameController GameController_Create(GameObject* object, void(*ctrlFunc)(GameController*), GameObject* ball, GameObject* enemy)
 {
-	return { object, ctrlFunc };
+	return { object, ctrlFunc, object->pos, ball, enemy };
 }
 
-// <<プレイヤーコントローラー>> ----------------------------------------
-
-// <コントローラー作成>
-GameController GameController_Player_Create(GameObject* object, int key_up, int key_down)
+// <コントローラー更新>
+void GameController_Update(GameController* ctrl)
 {
-	GameController ctrl = GameController_Create(object, GameController_Player_Update);
-	ctrl.player_key_up = key_up;
-	ctrl.player_key_down = key_down;
-	return ctrl;
-}
+	ctrl->target_pos.y = GameController_GetTargetY(ctrl->ball, ctrl->object, ctrl->enemy);
 
-// キー入力でパドルを操作
-void GameController_Player_Update(GameController* ctrl)
-{
-	ctrl->object->vel.y = 0.f;
-	if (IsButtonDown(ctrl->player_key_up))
-		ctrl->object->vel.y += -PADDLE_VEL;
-	if (IsButtonDown(ctrl->player_key_down))
-		ctrl->object->vel.y += PADDLE_VEL;
-}
-
-// <<Botコントローラー>> -----------------------------------------------
-
-// Bot自動操作
-// <コントローラー作成>
-GameController GameController_Bot_Create(GameObject* object, GameObject* ball, GameObject* enemy)
-{
-	GameController ctrl = GameController_Create(object, GameController_Bot_Update);
-	ctrl.bot_target_pos = object->pos;
-	ctrl.bot_ball = ball;
-	ctrl.bot_enemy = enemy;
-	return ctrl;
-}
-
-void GameController_Bot_Update(GameController* ctrl)
-{
-	// Botが動き始めるしきい値
-	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
-
-	int k = (ctrl->object->pos.x < ctrl->bot_enemy->pos.x) ? 1 : -1;
-
-	ctrl->bot_target_pos.y = GameController_GetTargetY(ctrl->bot_ball, ctrl->object, ctrl->bot_enemy);
-
-	ctrl->object->vel.y = 0.f;
-
-	// 自分向きかつしきい値より近かったら動く
-	if (k * (ctrl->bot_ball->vel.x) < 0 && k * (ctrl->bot_ball->pos.x - (ctrl->object->pos.x + padding)) < 0)
-	{
-		// Botがパドルを操作
-		float pos_y = ctrl->bot_target_pos.y;
-
-		// 死んだら中央に戻る
-		if (ctrl->bot_ball->pos.x < SCREEN_LEFT)
-			pos_y = ClampF(ctrl->bot_ball->pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
-
-		// Botが移動できる幅を制限
-		//target1_pos_y = ClampF(target1_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
-
-		if (ctrl->object->pos.y - pos_y > 1.2f * PADDLE_VEL)
-			ctrl->object->vel.y += -PADDLE_VEL;
-		else if (ctrl->object->pos.y - pos_y < -1.2f * PADDLE_VEL)
-			ctrl->object->vel.y += PADDLE_VEL;
-	}
+	ctrl->UpdateControl(ctrl);
 }
 
 // <ボール着弾点予想アルゴリズム>
@@ -176,4 +118,70 @@ float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, Gam
 	}
 
 	return target_pos_y;
+}
+
+// <<プレイヤーコントローラー>> ----------------------------------------
+
+// <コントローラー作成>
+GameController GameController_Player_Create(GameObject* object, GameObject* ball, GameObject* enemy, int key_up, int key_down)
+{
+	GameController ctrl = GameController_Create(object, GameController_Player_Update, ball, enemy);
+	ctrl.player_key_up = key_up;
+	ctrl.player_key_down = key_down;
+	return ctrl;
+}
+
+// キー入力でパドルを操作
+void GameController_Player_Update(GameController* ctrl)
+{
+	ctrl->object->vel.y = 0.f;
+	if (IsButtonDown(ctrl->player_key_up))
+		ctrl->object->vel.y += -PADDLE_VEL;
+	if (IsButtonDown(ctrl->player_key_down))
+		ctrl->object->vel.y += PADDLE_VEL;
+}
+
+// <<Botコントローラー>> -----------------------------------------------
+
+// <コントローラー作成>
+GameController GameController_Bot_Create(GameObject* object, GameObject* ball, GameObject* enemy)
+{
+	return  GameController_Create(object, GameController_Bot_Update, ball, enemy);
+}
+
+void GameController_Bot_Update(GameController* ctrl)
+{
+	// Botが動き始めるしきい値
+	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
+
+	int k = (ctrl->object->pos.x < ctrl->enemy->pos.x) ? 1 : -1;
+
+	ctrl->object->vel.y = 0.f;
+
+	// 自分向きかつしきい値より近かったら動く
+	if (k * (ctrl->ball->vel.x) < 0 && k * (ctrl->ball->pos.x - (ctrl->object->pos.x + padding)) < 0)
+	{
+		// Botがパドルを操作
+		float pos_y = ctrl->target_pos.y;
+
+		// 死んだら中央に戻る
+		if (ctrl->ball->pos.x < SCREEN_LEFT)
+			pos_y = ClampF(ctrl->ball->pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
+
+		// Botが移動できる幅を制限
+		//target1_pos_y = ClampF(target1_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
+
+		if (ctrl->object->pos.y - pos_y > 1.2f * PADDLE_VEL)
+			ctrl->object->vel.y += -PADDLE_VEL;
+		else if (ctrl->object->pos.y - pos_y < -1.2f * PADDLE_VEL)
+			ctrl->object->vel.y += PADDLE_VEL;
+	}
+}
+
+// <Botガイド描画>
+void GameController_RenderGuide(GameController* ctrl)
+{
+	GameObject target = *ctrl->object;
+	target.pos = ctrl->target_pos;
+	GameObject_Render(&target, 0x222222);
 }
