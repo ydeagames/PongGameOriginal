@@ -21,6 +21,13 @@ typedef struct
 // <パドル>
 #define PADDLE_VEL 8		// パドルの速度
 
+// <ボール>
+#define BALL_SIZE 8
+
+// <パドル>
+#define PADDLE_WIDTH  8
+#define PADDLE_HEIGHT 28
+
 // 関数の宣言 ==============================================================
 
 // <<オブジェクト>> ----------------------------------------------------
@@ -34,26 +41,29 @@ void GameObject_UpdatePosition(GameObject* obj);
 // <オブジェクト左位置セット>
 void GameObject_SetLeft(GameObject* obj, float left, float padding = 0.f);
 
-// <オブジェクト左位置セット>
+// <オブジェクト右位置セット>
 void GameObject_SetRight(GameObject* obj, float right, float padding = 0.f);
 
-// <オブジェクト左位置セット>
+// <オブジェクト上位置セット>
 void GameObject_SetTop(GameObject* obj, float top, float padding = 0.f);
 
-// <オブジェクト左位置セット>
+// <オブジェクト下位置セット>
 void GameObject_SetBottom(GameObject* obj, float bottom, float padding = 0.f);
 
 // <オブジェクト左位置ゲット>
 float GameObject_GetLeft(GameObject* obj, float padding = 0.f);
 
-// <オブジェクト左位置ゲット>
+// <オブジェクト右位置ゲット>
 float GameObject_GetRight(GameObject* obj, float padding = 0.f);
 
-// <オブジェクト左位置ゲット>
+// <オブジェクト上位置ゲット>
 float GameObject_GetTop(GameObject* obj, float padding = 0.f);
 
-// <オブジェクト左位置ゲット>
+// <オブジェクト下位置ゲット>
 float GameObject_GetBottom(GameObject* obj, float padding = 0.f);
+
+// <オブジェクト当たり判定>
+BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2);
 
 // <<ボールオブジェクト>> ----------------------------------------------
 

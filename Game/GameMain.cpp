@@ -11,6 +11,7 @@
 // ヘッダファイルの読み込み ================================================
 #include "GameMain.h"
 #include "GameObject.h"
+#include "GameController.h"
 
 
 // 列挙型の定義 ============================================================
@@ -62,11 +63,11 @@ GameObject g_ball;
 
 // <パドル1> -----------------------------------------------------------
 GameObject g_paddle1;
-Vec2 g_paddle1_target_pos;
+GameController g_paddle1_ctrl;
 
 // <パドル2> -----------------------------------------------------------
 GameObject g_paddle2;
-Vec2 g_paddle2_target_pos;
+GameController g_paddle2_ctrl;
 
 // <得点> --------------------------------------------------------------
 int g_score1;
@@ -91,17 +92,6 @@ void UpdateGameSceneDemo(void);
 void UpdateGameSceneServe(void);
 void UpdateGameScenePlay(void);
 
-// <ゲームの更新処理:操作:座標> ----------------------------------------
-void UpdateGameControlPaddle1(void);
-void UpdateGameControlPaddle2(void);
-void UpdateGameControlPaddlePlayer1(void);
-void UpdateGameControlPaddlePlayer2(void);
-void UpdateGameControlPaddleBot1(void);
-void UpdateGameControlPaddleBot2(void);
-
-// <ゲームの更新処理:オブジェクト:座標> --------------------------------
-void UpdateGameObjectPositionPaddleTarget(void);
-
 // <ゲームの更新処理:オブジェクト:当たり判定> --------------------------
 int UpdateGameObjectCollisionBallTopBottom(void);
 int UpdateGameObjectCollisionBallLeftRight(void);
@@ -110,8 +100,6 @@ int UpdateGameObjectCollisionBallPaddle(void);
 void UpdateGameObjectCollisionPaddleTopBottom(void);
 
 // <ゲームの更新処理:ユーティリティ> -----------------------------------
-int IsHit(float ball_pos_x, float ball_pos_y, float paddle_pos_x, float paddle_pos_y);
-float GetTargetY(float paddle_enemy_pos_x, float paddle_myself_pos_x, int k);
 float GetVelXFromPaddleVelY(float ball_vel_x, float paddle_vel_y);
 float GetVelYFromPaddlePosY(float ball_pos_y, float paddle_pos_y);
 
@@ -155,13 +143,13 @@ void InitializeGame(void)
 	g_paddle1 = GameObject_Paddle_Create();
 	GameObject_SetLeft(&g_paddle1, SCREEN_LEFT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle1);
-	g_paddle1_target_pos = g_paddle1.pos;
+	g_paddle1_ctrl = GameController_Bot_Create(&g_paddle1, &g_ball, &g_paddle2);
 
 	// パドル2
 	g_paddle2 = GameObject_Paddle_Create();
 	GameObject_SetRight(&g_paddle2, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle2);
-	g_paddle2_target_pos = g_paddle2.pos;
+	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 	// 得点
 	g_score1 = 0;
@@ -261,8 +249,8 @@ void UpdateGameSceneServe(void)
 	}
 
 	// 操作
-	UpdateGameControlPaddle1();
-	UpdateGameControlPaddle2();
+	g_paddle1_ctrl.UpdateControl(&g_paddle1_ctrl);
+	g_paddle2_ctrl.UpdateControl(&g_paddle2_ctrl);
 
 	// 座標更新
 	GameObject_UpdatePosition(&g_ball);
@@ -278,12 +266,9 @@ void UpdateGameSceneServe(void)
 // <ゲームの更新処理:シーン:プレイ> ------------------------------------
 void UpdateGameScenePlay(void)
 {
-	// ターゲット座標更新
-	UpdateGameObjectPositionPaddleTarget();
-
 	// 操作
-	UpdateGameControlPaddle1();
-	UpdateGameControlPaddle2();
+	g_paddle1_ctrl.UpdateControl(&g_paddle1_ctrl);
+	g_paddle2_ctrl.UpdateControl(&g_paddle2_ctrl);
 
 	// 座標更新
 	GameObject_UpdatePosition(&g_ball);
@@ -298,110 +283,6 @@ void UpdateGameScenePlay(void)
 	if (UpdateGameObjectCollisionBallPaddle())
 		PlaySoundMem(g_sound_se01, DX_PLAYTYPE_BACK);
 	UpdateGameObjectCollisionPaddleTopBottom();
-}
-
-// <ゲームの更新処理:操作:パドル1> -------------------------------------
-void UpdateGameControlPaddle1(void)
-{
-	// 操作
-
-	//UpdateGameControlPaddlePlayer1();
-	UpdateGameControlPaddleBot1();
-}
-
-// <ゲームの更新処理:操作:パドル2> -------------------------------------
-void UpdateGameControlPaddle2(void)
-{
-	// 操作
-
-	UpdateGameControlPaddlePlayer2();
-	//UpdateGameControlPaddleBot2();
-}
-
-// <ゲームの更新処理:操作:プレイヤー1> ---------------------------------
-void UpdateGameControlPaddlePlayer1(void)
-{
-	// キー入力でパドル1を操作
-	g_paddle1.vel.y = 0.f;
-	if (g_input_state & (PAD_INPUT_8 | PAD_INPUT_4))
-		g_paddle1.vel.y += -PADDLE_VEL;
-	if (g_input_state & (PAD_INPUT_5 | PAD_INPUT_1))
-		g_paddle1.vel.y += PADDLE_VEL;
-}
-
-// <ゲームの更新処理:操作:プレイヤー2> ---------------------------------
-void UpdateGameControlPaddlePlayer2(void)
-{
-	// キー入力でパドル2を操作
-	g_paddle2.vel.y = 0.f;
-	if (g_input_state & PAD_INPUT_UP)
-		g_paddle2.vel.y += -PADDLE_VEL;
-	if (g_input_state & PAD_INPUT_DOWN)
-		g_paddle2.vel.y += PADDLE_VEL;
-}
-
-// <ゲームの更新処理:操作:Bot1> ----------------------------------------
-void UpdateGameControlPaddleBot1(void)
-{
-	// Botが動き始めるしきい値
-	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
-
-	g_paddle1.vel.y = 0.f;
-
-	// 自分向きかつしきい値より近かったら動く
-	if (g_ball.vel.x < 0 && g_ball.pos.x < g_paddle1.pos.x + padding)
-	{
-		// Botがパドル1を操作
-		float target1_pos_y = g_paddle1_target_pos.y;
-
-		// 死んだら中央に戻る
-		if (g_ball.pos.x < SCREEN_LEFT)
-			target1_pos_y = ClampF(g_paddle1.pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
-
-		// Botが移動できる幅を制限
-		//target1_pos_y = ClampF(target1_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
-
-		if (g_paddle1.pos.y - target1_pos_y > 1.2f * PADDLE_VEL)
-			g_paddle1.vel.y += -PADDLE_VEL;
-		else if (g_paddle1.pos.y - target1_pos_y < -1.2f * PADDLE_VEL)
-			g_paddle1.vel.y += PADDLE_VEL;
-	}
-}
-
-// <ゲームの更新処理:操作:Bot2> ----------------------------------------
-void UpdateGameControlPaddleBot2(void)
-{
-	// Botが動き始めるしきい値
-	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
-
-	g_paddle2.vel.y = 0.f;
-
-	// 自分向きかつしきい値より近かったら動く
-	if (g_ball.vel.x > 0 && g_ball.pos.x > g_paddle2.pos.x - padding)
-	{
-		// Botがパドル2を操作
-		float target2_pos_y = g_paddle2_target_pos.y;
-
-		// 死んだら中央に戻る
-		if (g_ball.pos.x > SCREEN_RIGHT)
-			target2_pos_y = ClampF(g_paddle2.pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
-
-		// Botが移動できる幅を制限
-		//target2_pos_y = ClampF(target2_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
-
-		if (g_paddle2.pos.y - target2_pos_y > 1.2f * PADDLE_VEL)
-			g_paddle2.vel.y += -PADDLE_VEL;
-		else if (g_paddle2.pos.y - target2_pos_y < -1.2f * PADDLE_VEL)
-			g_paddle2.vel.y += PADDLE_VEL;
-	}
-}
-
-// <ゲームの更新処理:座標:パドルターゲット> ----------------------------
-void UpdateGameObjectPositionPaddleTarget(void)
-{
-	// ターゲット計算
-	g_paddle1_target_pos.y = GetTargetY(g_paddle1.pos.x, g_paddle2.pos.x, 1);
-	g_paddle2_target_pos.y = GetTargetY(g_paddle2.pos.x, g_paddle1.pos.x, -1);
 }
 
 // <ゲームの更新処理:衝突:ボール×壁上下> ------------------------------
@@ -505,7 +386,7 @@ int UpdateGameObjectCollisionBallPaddle(void)
 
 	// ボール・パドル当たり判定
 	{
-		if (IsHit(g_ball.pos.x, g_ball.pos.y, g_paddle1.pos.x, g_paddle1.pos.y))
+		if (GameObject_IsHit(&g_ball, &g_paddle1))
 		{
 			g_ball.vel.x = GetVelXFromPaddleVelY(-g_ball.vel.x, g_paddle1.vel.y);
 
@@ -518,7 +399,7 @@ int UpdateGameObjectCollisionBallPaddle(void)
 
 			flag_hit = 1;
 		}
-		else if (IsHit(g_ball.pos.x, g_ball.pos.y, g_paddle2.pos.x, g_paddle2.pos.y))
+		else if (GameObject_IsHit(&g_ball, &g_paddle2))
 		{
 			g_ball.vel.x = GetVelXFromPaddleVelY(-g_ball.vel.x, g_paddle2.vel.y);
 
@@ -549,134 +430,6 @@ void UpdateGameObjectCollisionPaddleTopBottom(void)
 
 	// 壁にめり込まないように調整
 	g_paddle2.pos.y = ClampF(g_paddle2.pos.y, padding_top, padding_bottom);
-}
-
-//----------------------------------------------------------------------
-//! @brief 当たり判定
-//!
-//! @param[ball_pos_x] ボールのX座標
-//! @param[ball_pos_y] ボールのY座標
-//! @param[paddle_pos_x] パドルのX座標
-//! @param[paddle_pos_y] パドルのY座標
-//!
-//! @return 当たり判定結果
-//----------------------------------------------------------------------
-int IsHit(float ball_pos_x, float ball_pos_y, float paddle_pos_x, float paddle_pos_y)
-{
-	float b_x1 = ball_pos_x - g_ball.size.x / 2;
-	float b_y1 = ball_pos_y - g_ball.size.y / 2;
-	float b_x2 = ball_pos_x + g_ball.size.x / 2;
-	float b_y2 = ball_pos_y + g_ball.size.x / 2;
-
-	float p_x1 = paddle_pos_x - PADDLE_WIDTH / 2;
-	float p_y1 = paddle_pos_y - PADDLE_HEIGHT / 2;
-	float p_x2 = paddle_pos_x + PADDLE_WIDTH / 2;
-	float p_y2 = paddle_pos_y + PADDLE_HEIGHT / 2;
-
-	return (p_x1 < b_x2&&b_x1 < p_x2&&p_y1 < b_y2&&b_y1 < p_y2);
-}
-
-//----------------------------------------------------------------------
-//! @brief Bot AI
-//! ボール着弾点予想アルゴリズム
-//!
-//! @param[paddle_enemy_pos_x] 敵パドルのX座標
-//! @param[paddle_myself_pos_x] 自パドルのX座標
-//! @param[k] 自パドルから放つボールの向き (1: 右向き, 2: 左向き)
-//!
-//! @return 予測Y座標
-//----------------------------------------------------------------------
-float GetTargetY(float paddle_enemy_pos_x, float paddle_myself_pos_x, int k)
-{
-	// ボール、パドルサイズを考慮した敵パドル、自パドルのX座標
-	float enemy_pos_x, myself_pos_x;
-	// ボールから何pxで自パドルに到着するのかを算出
-	float length_x, length_y;
-	// ボールの基準位置
-	float ball_base_y;
-	// 目標の座標
-	float ball_absolute_y;
-	// ボールの移動可能範囲
-	float screen_top_y, screen_bottom_y, screen_height;
-	// 目標の画面内座標
-	float target_pos_y;
-
-	// ボール、パドルサイズを考慮した敵パドル、自パドルのX座標
-	{
-		enemy_pos_x = paddle_myself_pos_x - k * (g_ball.size.x / 2 + PADDLE_WIDTH / 2);
-		myself_pos_x = paddle_enemy_pos_x + k * (g_ball.size.x / 2 + PADDLE_WIDTH / 2);
-	}
-
-	{
-		// ボールから何pxで自パドルに到着するのかを算出
-		{
-			length_x = 0;
-			if (k*g_ball.vel.x > 0)
-			{
-				// ボールが右に進んでいるとき 自分→敵→自分
-				// ボール～敵までの距離 (行き)
-				length_x += k * (enemy_pos_x - g_ball.pos.x);
-				// 敵～自分の距離 (帰り)
-				length_x += k * (enemy_pos_x - myself_pos_x);
-			}
-			else
-			{
-				// ボールが左に進んでいるとき 敵→自分
-				// ボール～自分までの距離
-				length_x += k * (g_ball.pos.x - myself_pos_x);
-			}
-		}
-
-		// 跳ね返りを無視したとき、自パドルに到着時ボールのY座標
-		{
-			length_y = length_x / g_ball.vel.x * g_ball.vel.y;
-			if (length_y < 0)
-				length_y *= -1; // 絶対値
-		}
-	}
-
-	// ボールのY座標
-	{
-		ball_base_y = g_ball.pos.y;
-		if (g_ball.vel.y < 0)
-			ball_base_y *= -1; // 速度が上向きのとき、上にターゲットが存在する
-	}
-
-	// ターゲットの算出
-	ball_absolute_y = ball_base_y + length_y;
-
-	{
-		// ボールサイズを考慮した上下の壁
-		screen_bottom_y = SCREEN_BOTTOM - g_ball.size.y / 2;
-		screen_top_y = SCREEN_TOP + g_ball.size.y / 2;
-		// ボールサイズを考慮したボールの移動範囲
-		screen_height = screen_bottom_y - screen_top_y;
-	}
-
-	// 画面の範囲外だったらheightずつ足して範囲内にする
-	// このとき、操作の回数を数える
-	{
-		int count = 0;
-		float pos_y_loop = ball_absolute_y;
-		while (pos_y_loop < screen_top_y)
-		{
-			pos_y_loop += screen_height;
-			count++;
-		}
-		while (pos_y_loop > screen_bottom_y)
-		{
-			pos_y_loop -= screen_height;
-			count++;
-		}
-
-		// 範囲を調整する回数が奇数であればY軸を中心に反転させる
-		if (count % 2 == 0)
-			target_pos_y = pos_y_loop;
-		else
-			target_pos_y = screen_bottom_y - pos_y_loop;
-	}
-
-	return target_pos_y;
 }
 
 //----------------------------------------------------------------------
@@ -766,7 +519,7 @@ void RenderGameScenePlay(void)
 	// オブジェクト描画
 	RenderGameObjectField();
 	RenderGameObjectScore();
-	//RenderGameObjectPaddleGuide();
+	RenderGameObjectPaddleGuide();
 	RenderGameObjectPaddle();
 	RenderGameObjectBall();
 }
@@ -794,8 +547,8 @@ void RenderGameObjectScore(void)
 void RenderGameObjectPaddleGuide(void)
 {
 	// ガイド表示
-	RenderObj(g_paddle1_target_pos.x, g_paddle1_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
-	RenderObj(g_paddle2_target_pos.x, g_paddle2_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
+	RenderObj(g_paddle1_ctrl.bot_target_pos.x, g_paddle1_ctrl.bot_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
+	//RenderObj(g_paddle2_target_pos.x, g_paddle2_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
 }
 
 // <ゲームの描画処理:パドル> -------------------------------------------

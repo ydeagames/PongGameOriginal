@@ -1,14 +1,7 @@
-#include "GameMain.h"
 #include "GameObject.h"
+#include "GameMain.h"
 
 // 定数の定義 ==============================================================
-
-// <ボール>
-#define BALL_SIZE 8
-
-// <パドル>
-#define PADDLE_WIDTH  8
-#define PADDLE_HEIGHT 28
 
 // 関数の定義 ==============================================================
 
@@ -57,22 +50,33 @@ float GameObject_GetLeft(GameObject* obj, float padding)
 	return obj->pos.x - (padding + obj->size.x / 2.f);
 }
 
-// <オブジェクト左位置ゲット>
+// <オブジェクト右位置ゲット>
 float GameObject_GetRight(GameObject* obj, float padding)
 {
 	return obj->pos.x + (padding + obj->size.x / 2.f);
 }
 
-// <オブジェクト左位置ゲット>
+// <オブジェクト上位置ゲット>
 float GameObject_GetTop(GameObject* obj, float padding)
 {
 	return obj->pos.y - (padding + obj->size.y / 2.f);
 }
 
-// <オブジェクト左位置ゲット>
+// <オブジェクト下位置ゲット>
 float GameObject_GetBottom(GameObject* obj, float padding)
 {
 	return obj->pos.y + (padding + obj->size.y / 2.f);
+}
+
+// <オブジェクト当たり判定>
+BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2)
+{
+	return (
+		GameObject_GetLeft(obj2) < GameObject_GetRight(obj1) &&
+		GameObject_GetLeft(obj1) < GameObject_GetRight(obj2) &&
+		GameObject_GetTop(obj2) < GameObject_GetBottom(obj1) &&
+		GameObject_GetTop(obj1) < GameObject_GetBottom(obj2)
+	);
 }
 
 // <<ボールオブジェクト>> ----------------------------------------------
