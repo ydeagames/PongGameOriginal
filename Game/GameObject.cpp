@@ -12,12 +12,10 @@
 
 // 関数の宣言 ==============================================================
 
-
-
-// 関数の定義 ==============================================================
-
 float GameObject_Paddle_GetBallVelX(GameObject* paddle, GameObject* ball);
 float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball);
+
+// 関数の定義 ==============================================================
 
 // <<オブジェクト>> ----------------------------------------------------
 
@@ -152,9 +150,9 @@ BOOL GameObject_Paddle_CollisionBall(GameObject* paddle, GameObject* ball)
 		ball->vel.y = GameObject_Paddle_GetBallVelY(paddle, ball);
 
 		if (ball->vel.x < 0)
-			ball->pos.x = paddle->pos.x - paddle->size.x / 2 - ball->size.x / 2;
+			ball->pos.x = GameObject_OffsetX(ball, LEFT, GameObject_GetX(paddle, LEFT));
 		else
-			ball->pos.x = paddle->pos.x + paddle->size.x / 2 + ball->size.x / 2;
+			ball->pos.x = GameObject_OffsetX(ball, RIGHT, GameObject_GetX(paddle, RIGHT));
 
 		return TRUE;
 	}
@@ -180,8 +178,8 @@ float GameObject_Paddle_GetBallVelX(GameObject* paddle, GameObject* ball)
 // <パドルにあたった位置からボールY速度を求める>
 float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball)
 {
-	float range_top = paddle->pos.y - (paddle->size.y / 2 - ball->size.y / 2);
-	float range_bottom = paddle->pos.y + (paddle->size.y / 2 - ball->size.y / 2);
+	float range_top = GameObject_OffsetY(ball, BOTTOM, GameObject_GetY(paddle, TOP));
+	float range_bottom = GameObject_OffsetY(ball, TOP, GameObject_GetY(paddle, BOTTOM));
 	float range_height = range_bottom - range_top;
 
 	return ((((ball->pos.y - range_top) / range_height) * 2 - 1)*BALL_VEL_Y);
