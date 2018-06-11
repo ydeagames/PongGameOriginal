@@ -103,8 +103,8 @@ float GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle
 
 	// ボール、パドルサイズを考慮した敵パドル、自パドルのX座標
 	{
-		enemy_pos_x = paddle_myself->pos.x - k * (ball->size.x / 2 + paddle_myself->size.x / 2);
-		myself_pos_x = paddle_enemy->pos.x + k * (ball->size.x / 2 + paddle_enemy->size.x / 2);
+		myself_pos_x = paddle_myself->pos.x - k * (ball->size.x / 2 + paddle_myself->size.x / 2);
+		enemy_pos_x = paddle_enemy->pos.x + k * (ball->size.x / 2 + paddle_enemy->size.x / 2);
 	}
 
 	{
