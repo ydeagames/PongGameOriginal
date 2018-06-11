@@ -12,7 +12,7 @@
 #include "GameMain.h"
 #include "GameObject.h"
 #include "GameController.h"
-
+#include "GameScore.h"
 
 // 列挙型の定義 ============================================================
 
@@ -32,14 +32,10 @@ enum GameState
 
 // 定数の定義 ==============================================================
 
-// <得点> --------------------------------------------------------------
-#define SCORE_GOAL 11		// 最大スコア
-
 // <フォント> ----------------------------------------------------------
 #define FONT_CUSTOM_FILE "Resources\\Fonts\\TheSlavicFont-Regular.ttf"
 #define FONT_CUSTOM_NAME "The Slavic Font"
 #define FONT_NAME "HGP創英角ｺﾞｼｯｸUB"
-#define FONT_SIZE_SCORE 100
 
 // <サウンド> ----------------------------------------------------------
 #define SOUND_SE01 "Resources\\Audio\\SE01.ogg"
@@ -72,12 +68,11 @@ GameController g_paddle1_ctrl;
 GameObject g_paddle2;
 GameController g_paddle2_ctrl;
 
-// <得点> --------------------------------------------------------------
-int g_score1;
-int g_score2;
-
 // <フォント> ----------------------------------------------------------
 HFNT g_font;
+
+// <得点> --------------------------------------------------------------
+GameScore g_score;
 
 // <サウンド> ----------------------------------------------------------
 HSND g_sound_se01;
@@ -103,10 +98,7 @@ void RenderGameScenePlay(void);
 void UpdateGameScore(ObjectSide side);
 
 // <ゲームの描画処理:オブジェクト> -------------------------------------
-void RenderGameObjectScore(void);
 void RenderGameObjectPaddleGuide(void);
-void RenderGameObjectPaddle(void);
-void RenderGameObjectBall(void);
 
 // 関数の定義 ==============================================================
 
@@ -144,15 +136,14 @@ void InitializeGame(void)
 	GameObject_Paddle_SetPosYDefault(&g_paddle2);
 	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, &g_ball, &g_paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
-	// 得点
-	g_score1 = 0;
-	g_score2 = 0;
-
 	// フォント
 	if (AddFontResourceEx(FONT_CUSTOM_FILE, FR_PRIVATE, NULL) > 0)
 		g_font = CreateFontToHandle(FONT_CUSTOM_NAME, FONT_SIZE_SCORE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
 	else
 		g_font = CreateFontToHandle(FONT_NAME, FONT_SIZE_SCORE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
+
+	// 得点
+	g_score = GameScore_Create(&g_field, g_font);
 
 	// サウンド
 	g_sound_se01 = LoadSoundMem(SOUND_SE01);
@@ -199,8 +190,7 @@ void UpdateGameSceneDemo(void)
 		if (g_input_state & PAD_INPUT_10)
 		{
 			// 点数リセット
-			g_score1 = 0;
-			g_score2 = 0;
+			GameScore_Clear(&g_score);
 
 			// X座標を画面中央へ戻す
 			GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
@@ -291,17 +281,9 @@ void UpdateGameScenePlay(void)
 void UpdateGameScore(ObjectSide side)
 {
 	// 得点処理
-	switch (side)
-	{
-	case LEFT:
-		g_score2++;
-		break;
-	case RIGHT:
-		g_score1++;
-		break;
-	}
+	GameScore_Add(&g_score, side);
 
-	if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
+	if (GameScore_IsFinished(&g_score))
 	{
 		GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
 		GameObject_Ball_SetVelXDefault(&g_ball);
@@ -345,7 +327,7 @@ void RenderGameSceneDemo(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_field);
 	// スコア描画
-	RenderGameObjectScore();
+	GameScore_Render(&g_score);
 	// ボール描画
 	GameObject_Render(&g_ball, COLOR_WHITE);
 }
@@ -357,7 +339,7 @@ void RenderGameSceneServe(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_field);
 	// スコア描画
-	RenderGameObjectScore();
+	GameScore_Render(&g_score);
 	// パドル描画
 	GameObject_Render(&g_paddle1, COLOR_WHITE);
 	GameObject_Render(&g_paddle2, COLOR_WHITE);
@@ -372,25 +354,13 @@ void RenderGameScenePlay(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_field);
 	// スコア描画
-	RenderGameObjectScore();
+	GameScore_Render(&g_score);
 	RenderGameObjectPaddleGuide();
 	// パドル描画
 	GameObject_Render(&g_paddle1, COLOR_WHITE);
 	GameObject_Render(&g_paddle2, COLOR_WHITE);
 	// ボール描画
 	GameObject_Render(&g_ball, COLOR_WHITE);
-}
-
-// <ゲームの描画処理:スコア> -------------------------------------------
-void RenderGameObjectScore(void)
-{
-	// スコア描画
-
-	// フォントを使用した文字の幅を取得
-	int width_score1 = GetDrawFormatStringWidthToHandle(g_font, "%2d", g_score1);
-
-	DrawFormatStringToHandle(SCREEN_CENTER_X - 100 - width_score1, 10, COLOR_WHITE, g_font, "%2d", g_score1);
-	DrawFormatStringToHandle(SCREEN_CENTER_X + 100, 10, COLOR_WHITE, g_font, "%2d", g_score2);
 }
 
 // <ゲームの描画処理:パドルガイド> -------------------------------------
