@@ -11,21 +11,21 @@ void GameController_Bot_Update(GameController* ctrl);
 // <<コントローラー>> --------------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Create(GameObject* object, void(*ctrlFunc)(GameController*), GameObject* ball, GameObject* enemy)
+GameController GameController_Create(GameObject* object, void(*ctrlFunc)(GameController*), GameObject* field, GameObject* ball, GameObject* enemy)
 {
-	return { object, ctrlFunc, object->pos, ball, enemy };
+	return { object, ctrlFunc, object->pos, field, ball, enemy };
 }
 
 // <コントローラー更新>
 void GameController_Update(GameController* ctrl)
 {
-	ctrl->target_pos.y = GameController_GetTargetY(ctrl->ball, ctrl->object, ctrl->enemy);
+	ctrl->target_pos.y = GameController_GetTargetY(ctrl->field, ctrl->ball, ctrl->object, ctrl->enemy);
 
 	ctrl->UpdateControl(ctrl);
 }
 
 // <ボール着弾点予想アルゴリズム>
-float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy)
+float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy)
 {
 	// ボール、パドルサイズを考慮した敵パドル、自パドルのX座標
 	float enemy_pos_x, myself_pos_x;
@@ -83,16 +83,16 @@ float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, Gam
 			ball_base_y *= -1; // 速度が上向きのとき、上にターゲットが存在する
 	}
 
-	// ターゲットの算出
-	ball_absolute_y = ball_base_y + length_y;
-
 	{
 		// ボールサイズを考慮した上下の壁
-		screen_bottom_y = SCREEN_BOTTOM - ball->size.y / 2;
-		screen_top_y = SCREEN_TOP + ball->size.y / 2;
+		screen_top_y = GameObject_OffsetY(ball, BOTTOM, GameObject_GetY(field, TOP));
+		screen_bottom_y = GameObject_OffsetY(ball, TOP, GameObject_GetY(field, BOTTOM));
 		// ボールサイズを考慮したボールの移動範囲
 		screen_height = screen_bottom_y - screen_top_y;
 	}
+
+	// ターゲットの算出
+	ball_absolute_y = ball_base_y + length_y;
 
 	// 画面の範囲外だったらheightずつ足して範囲内にする
 	// このとき、操作の回数を数える
@@ -123,9 +123,9 @@ float GameController_GetTargetY(GameObject* ball, GameObject* paddle_myself, Gam
 // <<プレイヤーコントローラー>> ----------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Player_Create(GameObject* object, GameObject* ball, GameObject* enemy, int key_up, int key_down)
+GameController GameController_Player_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, int key_up, int key_down)
 {
-	GameController ctrl = GameController_Create(object, GameController_Player_Update, ball, enemy);
+	GameController ctrl = GameController_Create(object, GameController_Player_Update, field, ball, enemy);
 	ctrl.player_key_up = key_up;
 	ctrl.player_key_down = key_down;
 	return ctrl;
@@ -144,9 +144,9 @@ void GameController_Player_Update(GameController* ctrl)
 // <<Botコントローラー>> -----------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Bot_Create(GameObject* object, GameObject* ball, GameObject* enemy)
+GameController GameController_Bot_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy)
 {
-	return  GameController_Create(object, GameController_Bot_Update, ball, enemy);
+	return  GameController_Create(object, GameController_Bot_Update, field, ball, enemy);
 }
 
 void GameController_Bot_Update(GameController* ctrl)
@@ -166,7 +166,7 @@ void GameController_Bot_Update(GameController* ctrl)
 
 		// 死んだら中央に戻る
 		if (ctrl->ball->pos.x < SCREEN_LEFT)
-			pos_y = ClampF(ctrl->ball->pos.y, SCREEN_CENTER_Y - 80.f, SCREEN_CENTER_Y + 80.f);
+			pos_y = ClampF(ctrl->ball->pos.y, ctrl->field->pos.y - 80.f, ctrl->field->pos.y + 80.f);
 
 		// Botが移動できる幅を制限
 		//target1_pos_y = ClampF(target1_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);

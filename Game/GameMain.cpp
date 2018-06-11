@@ -128,13 +128,13 @@ void InitializeGame(void)
 	g_paddle1 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_paddle1, RIGHT, SCREEN_LEFT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle1);
-	g_paddle1_ctrl = GameController_Bot_Create(&g_paddle1, &g_ball, &g_paddle2);
+	g_paddle1_ctrl = GameController_Bot_Create(&g_paddle1, &g_field, &g_ball, &g_paddle2);
 
 	// パドル2
 	g_paddle2 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_paddle2, LEFT, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle2);
-	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, &g_ball, &g_paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
+	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, &g_field, &g_ball, &g_paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 	// フォント
 	if (AddFontResourceEx(FONT_CUSTOM_FILE, FR_PRIVATE, NULL) > 0)
