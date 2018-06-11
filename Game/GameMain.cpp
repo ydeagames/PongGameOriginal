@@ -58,6 +58,9 @@ int g_input_state;
 // <シーン状態> --------------------------------------------------------
 int g_game_state;
 
+// <フィールド> --------------------------------------------------------
+GameObject g_field;
+
 // <ボール> ------------------------------------------------------------
 GameObject g_ball;
 
@@ -92,21 +95,12 @@ void UpdateGameSceneDemo(void);
 void UpdateGameSceneServe(void);
 void UpdateGameScenePlay(void);
 
-// <ゲームの更新処理:オブジェクト:当たり判定> --------------------------
-int UpdateGameObjectCollisionBallTopBottom(void);
-int UpdateGameObjectCollisionBallLeftRight(void);
-int UpdateGameObjectCollisionBallLeftRightScoring(void);
-int UpdateGameObjectCollisionBallPaddle(void);
-void UpdateGameObjectCollisionPaddleTopBottom(void);
-
-// <ゲームの更新処理:ユーティリティ> -----------------------------------
-float GameObject_Paddle_GetBallVelX(float ball_vel_x, float paddle_vel_y);
-float GameObject_Paddle_GetVelYFromPaddlePosY(float ball_pos_y, float paddle_pos_y);
-
 // <ゲームの描画処理> --------------------------------------------------
 void RenderGameSceneDemo(void);
 void RenderGameSceneServe(void);
 void RenderGameScenePlay(void);
+
+void UpdateGameScore(ObjectSide side);
 
 // <ゲームの描画処理:オブジェクト> -------------------------------------
 void RenderGameObjectField(void);
@@ -116,7 +110,7 @@ void RenderGameObjectPaddle(void);
 void RenderGameObjectBall(void);
 
 // <ゲームの描画処理:ユーティリティ> -----------------------------------
-void RenderObj(float x, float y, float w, float h, unsigned int color);
+void RenderObj(GameObject* obj, unsigned int color);
 
 
 // 関数の定義 ==============================================================
@@ -133,6 +127,9 @@ void InitializeGame(void)
 	// シーン状態
 	g_game_state = STATE_DEMO;
 
+	// フィールド
+	g_field = GameObject_Field_Create();
+
 	// ボール
 	g_ball = GameObject_Ball_Create();
 	GameObject_Ball_SetPosXDefault(&g_ball);
@@ -141,13 +138,13 @@ void InitializeGame(void)
 
 	// パドル1
 	g_paddle1 = GameObject_Paddle_Create();
-	GameObject_SetLeft(&g_paddle1, SCREEN_LEFT, 64);
+	GameObject_SetX(&g_paddle1, RIGHT, SCREEN_LEFT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle1);
 	g_paddle1_ctrl = GameController_Bot_Create(&g_paddle1, &g_ball, &g_paddle2);
 
 	// パドル2
 	g_paddle2 = GameObject_Paddle_Create();
-	GameObject_SetRight(&g_paddle2, SCREEN_RIGHT, 64);
+	GameObject_SetX(&g_paddle2, LEFT, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_paddle2);
 	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
@@ -225,8 +222,8 @@ void UpdateGameSceneDemo(void)
 	GameObject_UpdatePosition(&g_ball);
 
 	// 当たり判定
-	UpdateGameObjectCollisionBallTopBottom();
-	UpdateGameObjectCollisionBallLeftRight();
+	GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE);
+	GameObject_Field_CollisionHorizontal(&g_field, &g_ball, TRUE);
 }
 
 // <ゲームの更新処理:シーン:サーブ> ------------------------------------
@@ -258,9 +255,11 @@ void UpdateGameSceneServe(void)
 	GameObject_UpdatePosition(&g_paddle2);
 
 	// 当たり判定
-	UpdateGameObjectCollisionBallTopBottom();
-	UpdateGameObjectCollisionBallPaddle();
-	UpdateGameObjectCollisionPaddleTopBottom();
+	GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE);
+	GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball);
+	GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball);
+	GameObject_Field_CollisionVertical(&g_field, &g_paddle1, FALSE);
+	GameObject_Field_CollisionVertical(&g_field, &g_paddle2, FALSE);
 }
 
 // <ゲームの更新処理:シーン:プレイ> ------------------------------------
@@ -276,23 +275,35 @@ void UpdateGameScenePlay(void)
 	GameObject_UpdatePosition(&g_paddle2);
 
 	// 当たり判定
-	if (UpdateGameObjectCollisionBallTopBottom())
+	if (GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE))
 		PlaySoundMem(g_sound_se02, DX_PLAYTYPE_BACK);
-	if (UpdateGameObjectCollisionBallLeftRightScoring())
-		PlaySoundMem(g_sound_se03, DX_PLAYTYPE_BACK);
-	if (UpdateGameObjectCollisionBallPaddle())
+	{
+		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_field, &g_ball, FALSE);
+		if (side)
+		{
+			UpdateGameScore(side);
+			PlaySoundMem(g_sound_se03, DX_PLAYTYPE_BACK);
+		}
+	}
+	if (GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball) || GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball))
 		PlaySoundMem(g_sound_se01, DX_PLAYTYPE_BACK);
-	UpdateGameObjectCollisionPaddleTopBottom();
+	GameObject_Field_CollisionVertical(&g_field, &g_paddle1, FALSE);
+	GameObject_Field_CollisionVertical(&g_field, &g_paddle2, FALSE);
 }
 
-// <>
-void UpdateGameScore()
+// <ゲームの更新処理:スコア加算>
+void UpdateGameScore(ObjectSide side)
 {
 	// 得点処理
-	if (g_ball.pos.x < padding_left)
+	switch (side)
+	{
+	case LEFT:
 		g_score2++;
-	if (padding_right <= g_ball.pos.x)
+		break;
+	case RIGHT:
 		g_score1++;
+		break;
+	}
 
 	if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
 	{
@@ -308,14 +319,6 @@ void UpdateGameScore()
 	else
 		// シーンをサーブに変更
 		g_game_state = STATE_SERVE;
-}
-
-// <ゲームの更新処理:衝突:パドル×ボール> ------------------------------
-int UpdateGameObjectCollisionBallPaddle(void)
-{
-	return
-		GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball) ||
-		GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball);
 }
 
 //----------------------------------------------------------------------
@@ -394,39 +397,33 @@ void RenderGameObjectScore(void)
 void RenderGameObjectPaddleGuide(void)
 {
 	// ガイド表示
-	RenderObj(g_paddle1_ctrl.bot_target_pos.x, g_paddle1_ctrl.bot_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
-	//RenderObj(g_paddle2_target_pos.x, g_paddle2_target_pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, 0x222222);
+	GameObject paddle1_target = g_paddle1;
+	GameObject paddle2_target = g_paddle2;
+	paddle1_target.pos = g_paddle1_ctrl.bot_target_pos;
+	paddle2_target.pos = g_paddle2_ctrl.bot_target_pos;
+	RenderObj(&paddle1_target, 0x222222);
+	RenderObj(&paddle2_target, 0x222222);
 }
 
 // <ゲームの描画処理:パドル> -------------------------------------------
 void RenderGameObjectPaddle(void)
 {
 	// パドル表示
-	RenderObj(g_paddle1.pos.x, g_paddle1.pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, COLOR_WHITE);
-	RenderObj(g_paddle2.pos.x, g_paddle2.pos.y, PADDLE_WIDTH, PADDLE_HEIGHT, COLOR_WHITE);
+	RenderObj(&g_paddle1, COLOR_WHITE);
+	RenderObj(&g_paddle2, COLOR_WHITE);
 }
 
 // <ゲームの描画処理:ボール> -------------------------------------------
 void RenderGameObjectBall(void)
 {
 	// ボール表示
-	RenderObj(g_ball.pos.x, g_ball.pos.y, BALL_SIZE, BALL_SIZE, COLOR_WHITE);
+	RenderObj(&g_ball, COLOR_WHITE);
 }
 
-//----------------------------------------------------------------------
-//! @brief オブジェクト描画
-//!
-//! @param[x] X座標
-//! @param[y] Y座標
-//! @param[w] 幅
-//! @param[h] 高さ
-//! @param[color] 色
-//!
-//! @return なし
-//----------------------------------------------------------------------
-void RenderObj(float x, float y, float w, float h, unsigned int color)
+// <オブジェクト描画> --------------------------------------------------
+void RenderObj(GameObject* obj, unsigned int color)
 {
-	DrawBox((int)(x - w / 2), (int)(y - h / 2), (int)(x + w / 2), (int)(y + h / 2), color, TRUE);
+	DrawBoxAA(GameObject_GetX(obj, LEFT), GameObject_GetY(obj, TOP), GameObject_GetX(obj, RIGHT), GameObject_GetY(obj, BOTTOM), color, TRUE);
 }
 
 

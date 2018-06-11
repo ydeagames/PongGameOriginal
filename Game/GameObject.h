@@ -6,6 +6,7 @@
 // <シーン状態> --------------------------------------------------------
 enum ObjectSide
 {
+	NONE = 0,
 	CENTER_X,	// X中央
 	LEFT,		// 左
 	RIGHT,		// 右
@@ -89,3 +90,14 @@ void GameObject_Paddle_SetPosYDefault(GameObject* obj);
 
 // <パドルオブジェクトボール衝突処理>
 BOOL GameObject_Paddle_CollisionBall(GameObject* paddle, GameObject* ball);
+
+// <<フィールドオブジェクト>> ------------------------------------------
+
+// <ボールオブジェクト作成>
+GameObject GameObject_Field_Create(void);
+
+// <フィールド上下衝突処理>
+ObjectSide GameObject_Field_CollisionVertical(GameObject* field, GameObject* obj, BOOL flag_with_bounce);
+
+// <フィールド左右衝突処理>
+ObjectSide GameObject_Field_CollisionHorizontal(GameObject* field, GameObject* obj, BOOL flag_with_bounce);
