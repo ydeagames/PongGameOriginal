@@ -77,8 +77,11 @@ void GameObject_Ball_SetPosXDefault(GameObject* obj);
 // <ボールオブジェクト座標Yデフォルト>
 void GameObject_Ball_SetPosYDefault(GameObject* obj);
 
-// <ボールオブジェクト移動デフォルト>
-void GameObject_Ball_SetVelDefault(GameObject* obj);
+// <ボールオブジェクト移動Xデフォルト>
+void GameObject_Ball_SetVelXDefault(GameObject* obj);
+
+// <ボールオブジェクト移動Yデフォルト>
+void GameObject_Ball_SetVelYDefault(GameObject* obj);
 
 // <<パドルオブジェクト>> ----------------------------------------------
 

@@ -107,12 +107,6 @@ GameObject GameObject_Ball_Create(void)
 	return GameObject_Create({ 0, 0 }, { 0, 0 }, { BALL_SIZE, BALL_SIZE });
 }
 
-// <ボールオブジェクト移動デフォルト>
-void GameObject_Ball_SetVelDefault(GameObject* obj)
-{
-	obj->vel = { BALL_VEL_X_MIN, -BALL_VEL_Y };
-}
-
 // <ボールオブジェクト座標Xデフォルト>
 void GameObject_Ball_SetPosXDefault(GameObject* obj)
 {
@@ -123,6 +117,18 @@ void GameObject_Ball_SetPosXDefault(GameObject* obj)
 void GameObject_Ball_SetPosYDefault(GameObject* obj)
 {
 	obj->pos.y = SCREEN_CENTER_Y;
+}
+
+// <ボールオブジェクト移動Xデフォルト>
+void GameObject_Ball_SetVelXDefault(GameObject* obj)
+{
+	obj->vel.x = BALL_VEL_X_MIN;
+}
+
+// <ボールオブジェクト移動Yデフォルト>
+void GameObject_Ball_SetVelYDefault(GameObject* obj)
+{
+	obj->vel.y = -BALL_VEL_Y;
 }
 
 // <<パドルオブジェクト>> ----------------------------------------------

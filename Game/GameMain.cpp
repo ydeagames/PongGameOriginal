@@ -134,7 +134,8 @@ void InitializeGame(void)
 	g_ball = GameObject_Ball_Create();
 	GameObject_Ball_SetPosXDefault(&g_ball);
 	GameObject_Ball_SetPosYDefault(&g_ball);
-	GameObject_Ball_SetVelDefault(&g_ball);
+	GameObject_Ball_SetVelXDefault(&g_ball);
+	GameObject_Ball_SetVelYDefault(&g_ball);
 
 	// パドル1
 	g_paddle1 = GameObject_Paddle_Create();
@@ -307,11 +308,9 @@ void UpdateGameScore(ObjectSide side)
 
 	if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
 	{
-		// 初期化ボール座標
-		g_ball.pos.x = (float)(SCREEN_CENTER_X);
-		// 初期化ボール速度
-		g_ball.vel.y = -BALL_VEL_Y;
-		g_ball.vel.x = BALL_VEL_X_MIN;
+		GameObject_Ball_SetPosXDefault(&g_ball);
+		GameObject_Ball_SetVelXDefault(&g_ball);
+		GameObject_Ball_SetVelYDefault(&g_ball);
 
 		// シーンをデモに変更
 		g_game_state = STATE_DEMO;
