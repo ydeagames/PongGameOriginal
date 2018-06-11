@@ -76,19 +76,19 @@ float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject*
 		}
 	}
 
-	// ボールのY座標
-	{
-		ball_base_y = ball->pos.y;
-		if (ball->vel.y < 0)
-			ball_base_y *= -1; // 速度が上向きのとき、上にターゲットが存在する
-	}
-
 	{
 		// ボールサイズを考慮した上下の壁
 		screen_top_y = GameObject_OffsetY(ball, BOTTOM, GameObject_GetY(field, TOP));
 		screen_bottom_y = GameObject_OffsetY(ball, TOP, GameObject_GetY(field, BOTTOM));
 		// ボールサイズを考慮したボールの移動範囲
 		screen_height = screen_bottom_y - screen_top_y;
+	}
+
+	// ボールのY座標
+	{
+		ball_base_y = ball->pos.y;
+		if (ball->vel.y < 0)
+			ball_base_y *= -1; // 速度が上向きのとき、上にターゲットが存在する
 	}
 
 	// ターゲットの算出
