@@ -114,15 +114,15 @@ GameObject GameObject_Ball_Create(void)
 }
 
 // <ボールオブジェクト座標Xデフォルト>
-void GameObject_Ball_SetPosXDefault(GameObject* obj)
+void GameObject_Ball_SetPosXDefault(GameObject* obj, GameObject* field)
 {
-	obj->pos.x = SCREEN_CENTER_X;
+	obj->pos.x = field->pos.x;
 }
 
 // <ボールオブジェクト座標Yデフォルト>
-void GameObject_Ball_SetPosYDefault(GameObject* obj)
+void GameObject_Ball_SetPosYDefault(GameObject* obj, GameObject* field)
 {
-	obj->pos.y = SCREEN_CENTER_Y;
+	obj->pos.y = field->pos.y;
 }
 
 // <ボールオブジェクト移動Xデフォルト>

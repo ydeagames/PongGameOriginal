@@ -127,8 +127,8 @@ void InitializeGame(void)
 
 	// ボール
 	g_ball = GameObject_Ball_Create();
-	GameObject_Ball_SetPosXDefault(&g_ball);
-	GameObject_Ball_SetPosYDefault(&g_ball);
+	GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
+	GameObject_Ball_SetPosYDefault(&g_ball, &g_field);
 	GameObject_Ball_SetVelXDefault(&g_ball);
 	GameObject_Ball_SetVelYDefault(&g_ball);
 
@@ -203,7 +203,7 @@ void UpdateGameSceneDemo(void)
 			g_score2 = 0;
 
 			// X座標を画面中央へ戻す
-			GameObject_Ball_SetPosXDefault(&g_ball);
+			GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
 
 			// パドルを初期位置へ
 			GameObject_Paddle_SetPosYDefault(&g_paddle1);
@@ -233,7 +233,7 @@ void UpdateGameSceneServe(void)
 	if (g_counter >= SERVE_WAIT_TIME)
 	{
 		// X座標を画面中央へ戻す
-		GameObject_Ball_SetPosXDefault(&g_ball);
+		GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
 
 		// シーンをプレイに変更
 		g_game_state = STATE_PLAY;
@@ -303,7 +303,7 @@ void UpdateGameScore(ObjectSide side)
 
 	if (g_score1 >= SCORE_GOAL || g_score2 >= SCORE_GOAL)
 	{
-		GameObject_Ball_SetPosXDefault(&g_ball);
+		GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
 		GameObject_Ball_SetVelXDefault(&g_ball);
 		GameObject_Ball_SetVelYDefault(&g_ball);
 

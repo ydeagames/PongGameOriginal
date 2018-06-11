@@ -75,10 +75,10 @@ void GameObject_Render(GameObject* obj, unsigned int color);
 GameObject GameObject_Ball_Create(void);
 
 // <ボールオブジェクト座標Xデフォルト>
-void GameObject_Ball_SetPosXDefault(GameObject* obj);
+void GameObject_Ball_SetPosXDefault(GameObject* obj, GameObject* field);
 
 // <ボールオブジェクト座標Yデフォルト>
-void GameObject_Ball_SetPosYDefault(GameObject* obj);
+void GameObject_Ball_SetPosYDefault(GameObject* obj, GameObject* field);
 
 // <ボールオブジェクト移動Xデフォルト>
 void GameObject_Ball_SetVelXDefault(GameObject* obj);
