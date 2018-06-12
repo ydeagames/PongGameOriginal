@@ -6,7 +6,6 @@
 #define FONT_CUSTOM_FILE "Resources\\Fonts\\TheSlavicFont-Regular.ttf"
 #define FONT_CUSTOM_NAME "The Slavic Font"
 #define FONT_NAME "HGPënâpäp∫ﬁºØ∏UB"
-#define FONT_SIZE_SCORE 100
 
 // <ÉTÉEÉìÉh> ----------------------------------------------------------
 #define SOUND_SE01 "Resources\\Audio\\SE01.ogg"

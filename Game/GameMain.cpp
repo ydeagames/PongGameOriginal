@@ -298,6 +298,32 @@ void RenderGameSceneDemo(void)
 	GameScore_Render(&g_score, g_resource.font);
 	// ボール描画
 	GameObject_Render(&g_ball, COLOR_WHITE);
+
+	{
+		GameObject inner = g_field;
+		inner.size.x -= 80;
+		inner.size.y -= 80;
+
+		{
+			SetDrawBlendMode(DX_BLENDMODE_INVDESTCOLOR, 255);
+			GameObject_Render(&g_field, 0x222222);
+			GameObject_Render(&inner, COLOR_WHITE);
+			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+		}
+
+		DrawFormatStringToHandle(
+			(int)(g_field.pos.x - GetDrawFormatStringWidthToHandle(g_resource.font, GAME_TITLE) / 2),
+			(int)(GameObject_GetY(&inner, TOP, -20)),
+			COLOR_BLACK, g_resource.font, GAME_TITLE
+		);
+
+		{
+			IPDATA ip;
+			GetMyIPAddress(&ip);
+			DrawFormatString(GameObject_GetX(&inner, LEFT, -100), inner.pos.y - 60, COLOR_BLACK, "%d.%d.%d.%d", ip.d1, ip.d2, ip.d3, ip.d4);
+		}
+
+	}
 }
 
 // <ゲームの描画処理:シーン:サーブ> -------------------------------------------
