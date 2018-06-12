@@ -14,6 +14,7 @@ typedef struct
 	int selected;
 	BOOL listening;
 	BOOL connected;
+	int failmsg_frame;
 
 	GameResource* resources;
 } GameMenu;

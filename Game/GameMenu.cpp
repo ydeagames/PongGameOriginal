@@ -23,7 +23,7 @@ enum GameMenuState
 // <メニュー作成>
 GameMenu GameMenu_Create(GameScene* scene, GameControllers* controllers, GameResource* resources)
 {
-	return { scene, controllers, 0, FALSE, FALSE, resources };
+	return { scene, controllers, 0, FALSE, FALSE, 0, resources };
 }
 
 // <メニュー更新>
@@ -164,6 +164,9 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 					menu->connected = TRUE;
 				}
 			}
+
+			if (!menu->connected)
+				menu->failmsg_frame = 4 * 60;
 		}
 		else if (menu->selected == 2)
 		{
@@ -238,4 +241,17 @@ void GameMenu_Render(GameMenu* menu)
 		"※ ↑↓キー: メニュー選択、パドル操作　　スペースキー: メニュー決定\n"
 		"※ 設定「ローカルのアドレスにはプロキシサーバーを使わない」にチェックを付けて下さい\n"
 		"※ ファイアウォールの画面が出ましたら、「アクセスを許可する」を選択して下さい\n");
+
+	if (menu->failmsg_frame-->0)
+	{
+		GameObject alert = menu->scene->field;
+		alert.pos.x += 160;
+		alert.pos.y += 80;
+		alert.size.x = 160;
+		alert.size.y = 40;
+		
+		GameObject_Render(&alert, COLOR_RED);
+		DrawFormatStringToHandle((int)GameObject_GetX(&alert, LEFT, -40), (int)GameObject_GetY(&alert, TOP, -10), COLOR_WHITE, menu->resources->font_menu,
+			"接続失敗");
+	}
 }
