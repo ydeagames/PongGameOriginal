@@ -14,6 +14,8 @@
 #include "GameController.h"
 #include "GameScore.h"
 #include "GameResource.h"
+#include "GameMenu.h"
+
 
 // 列挙型の定義 ============================================================
 
@@ -64,6 +66,9 @@ GameScore g_score;
 
 // <サーブ待機> --------------------------------------------------------
 int g_counter;
+
+// <メニュー> ----------------------------------------------------------
+GameMenu g_menu;
 
 
 // 関数の宣言 ==============================================================
@@ -124,6 +129,9 @@ void InitializeGame(void)
 
 	// サーブ待機
 	g_counter = 0;
+
+	// メニュー
+	g_menu = GameMenu_Create(&g_field);
 }
 
 
@@ -149,8 +157,6 @@ void UpdateGame(void)
 		break;
 	}
 }
-
-int g_select = 0;
 
 // <ゲームの更新処理:シーン:デモ> --------------------------------------
 void UpdateGameSceneDemo(void)
@@ -182,13 +188,8 @@ void UpdateGameSceneDemo(void)
 	GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE);
 	GameObject_Field_CollisionHorizontal(&g_field, &g_ball, TRUE);
 
-	{
-		if (IsButtonPressed(PAD_INPUT_UP))
-			g_select--;
-		if (IsButtonPressed(PAD_INPUT_DOWN))
-			g_select++;
-		g_select = ((g_select % 3) + 3) % 3;
-	}
+	// メニュー更新
+	GameMenu_Update(&g_menu);
 }
 
 // <ゲームの更新処理:シーン:サーブ> ------------------------------------
@@ -308,38 +309,8 @@ void RenderGameSceneDemo(void)
 	GameScore_Render(&g_score, g_resource.font);
 	// ボール描画
 	GameObject_Render(&g_ball, COLOR_WHITE);
-
-	{
-		GameObject inner = g_field;
-		inner.size.x -= 80;
-		inner.size.y -= 160;
-		inner.pos.y += 40;
-
-		{
-			SetDrawBlendMode(DX_BLENDMODE_INVDESTCOLOR, 255);
-			GameObject_Render(&g_field, 0x222222);
-			GameObject_Render(&inner, COLOR_WHITE);
-			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
-		}
-
-		DrawFormatStringToHandle(
-			(int)(g_field.pos.x - GetDrawFormatStringWidthToHandle(g_resource.font, GAME_TITLE) / 2),
-			(int)(GameObject_GetY(&inner, TOP, -20)),
-			COLOR_BLACK, g_resource.font, GAME_TITLE
-		);
-
-		{
-			IPDATA ip;
-			GetMyIPAddress(&ip);
-			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y - 60), COLOR_BLACK, "%d.%d.%d.%d", ip.d1, ip.d2, ip.d3, ip.d4);
-		}
-
-		{
-			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y - 20), COLOR_BLACK, "%s PLAY SOLO", g_select==0 ? "→" : "　");
-			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y + 20), COLOR_BLACK, "%s PLAY FOR WAIT", g_select == 1 ? "→" : "　");
-			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y + 60), COLOR_BLACK, "%s PLAY TO JOIN", g_select == 2 ? "→" : "　");
-		}
-	}
+	// メニュー描画
+	GameMenu_Render(&g_menu, &g_resource);
 }
 
 // <ゲームの描画処理:シーン:サーブ> -------------------------------------------

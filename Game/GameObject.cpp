@@ -218,7 +218,6 @@ ObjectSide GameObject_Field_CollisionVertical(GameObject* field, GameObject* obj
 
 		if (flag_with_bounce)
 		{
-			// ‰æ–ÊŠO‚Éo‚½‚Æ‚«‚Ìˆ—
 			if (obj->pos.y < padding_top || padding_bottom <= obj->pos.y)
 			{
 				obj->vel.y *= -1.f;

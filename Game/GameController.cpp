@@ -1,5 +1,4 @@
 #include "GameController.h"
-#include "GameMain.h"
 
 // ŠÖ”‚ÌéŒ¾ ==============================================================
 
@@ -165,7 +164,7 @@ void GameController_Bot_Update(GameController* ctrl)
 		float pos_y = ctrl->target_pos.y;
 
 		// Ž€‚ñ‚¾‚ç’†‰›‚É–ß‚é
-		if (ctrl->ball->pos.x < SCREEN_LEFT)
+		if (ctrl->ball->pos.x < GameObject_GetX(ctrl->field, LEFT))
 			pos_y = ClampF(ctrl->ball->pos.y, ctrl->field->pos.y - 80.f, ctrl->field->pos.y + 80.f);
 
 		// Bot‚ªˆÚ“®‚Å‚«‚é•‚ð§ŒÀ
