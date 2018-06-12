@@ -150,6 +150,8 @@ void UpdateGame(void)
 	}
 }
 
+int g_select = 0;
+
 // <ゲームの更新処理:シーン:デモ> --------------------------------------
 void UpdateGameSceneDemo(void)
 {
@@ -179,6 +181,14 @@ void UpdateGameSceneDemo(void)
 	// 当たり判定
 	GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE);
 	GameObject_Field_CollisionHorizontal(&g_field, &g_ball, TRUE);
+
+	{
+		if (IsButtonPressed(PAD_INPUT_UP))
+			g_select--;
+		if (IsButtonPressed(PAD_INPUT_DOWN))
+			g_select++;
+		g_select = ((g_select % 3) + 3) % 3;
+	}
 }
 
 // <ゲームの更新処理:シーン:サーブ> ------------------------------------
@@ -302,7 +312,8 @@ void RenderGameSceneDemo(void)
 	{
 		GameObject inner = g_field;
 		inner.size.x -= 80;
-		inner.size.y -= 80;
+		inner.size.y -= 160;
+		inner.pos.y += 40;
 
 		{
 			SetDrawBlendMode(DX_BLENDMODE_INVDESTCOLOR, 255);
@@ -320,9 +331,14 @@ void RenderGameSceneDemo(void)
 		{
 			IPDATA ip;
 			GetMyIPAddress(&ip);
-			DrawFormatString(GameObject_GetX(&inner, LEFT, -100), inner.pos.y - 60, COLOR_BLACK, "%d.%d.%d.%d", ip.d1, ip.d2, ip.d3, ip.d4);
+			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y - 60), COLOR_BLACK, "%d.%d.%d.%d", ip.d1, ip.d2, ip.d3, ip.d4);
 		}
 
+		{
+			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y - 20), COLOR_BLACK, "%s PLAY SOLO", g_select==0 ? "→" : "　");
+			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y + 20), COLOR_BLACK, "%s PLAY FOR WAIT", g_select == 1 ? "→" : "　");
+			DrawFormatString((int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y + 60), COLOR_BLACK, "%s PLAY TO JOIN", g_select == 2 ? "→" : "　");
+		}
 	}
 }
 
