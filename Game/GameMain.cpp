@@ -18,22 +18,6 @@
 #include "GameScene.h"
 
 
-// 列挙型の定義 ============================================================
-
-// <シーン状態> --------------------------------------------------------
-enum GameState
-{
-	// デモ
-	STATE_DEMO,
-
-	// サーブ
-	STATE_SERVE,
-
-	// プレイ
-	STATE_PLAY
-};
-
-
 // 定数の定義 ==============================================================
 
 // <サーブ待機> --------------------------------------------------------
@@ -104,6 +88,7 @@ void InitializeGame(void)
 	GameObject_SetX(&g_scene.paddle2, LEFT, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
 	g_controllers.paddle2 = GameController_Player_Create(&g_scene.paddle2, &g_scene, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
+	//g_controllers.paddle2 = GameController_Bot_Create(&g_scene.paddle2, &g_scene, &g_scene.paddle1);
 
 	// リソース
 	g_resource = GameResource_Create();

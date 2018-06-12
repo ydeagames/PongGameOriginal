@@ -7,12 +7,12 @@
 enum ObjectSide
 {
 	NONE = 0,
-	CENTER_X,	// X’†‰›
-	LEFT,		// ¶
-	RIGHT,		// ‰E
-	CENTER_Y,	// Y’†‰›
-	TOP,		// ã
-	BOTTOM		// ‰º
+	CENTER_X = 1,	// X’†‰›
+	LEFT = -2,		// ¶
+	RIGHT = 2,		// ‰E
+	CENTER_Y = -1,	// Y’†‰›
+	TOP = -3,	// ã
+	BOTTOM = 3	// ‰º
 };
 
 // \‘¢‘Ì‚ÌéŒ¾ ============================================================

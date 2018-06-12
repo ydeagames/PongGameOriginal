@@ -9,6 +9,11 @@ void GameController_Bot_UpdateControl(GameController* ctrl);
 void GameController_Network_Update(GameController* ctrl);
 void GameController_Network_UpdateControl(GameController* ctrl);
 
+inline float abs(float a)
+{
+	return a > 0 ? a : -a;
+}
+
 // 関数の定義 ==============================================================
 
 // <<コントローラー>> --------------------------------------------------
@@ -177,13 +182,13 @@ void GameController_Bot_UpdateControl(GameController* ctrl)
 	ctrl->object->vel.y = 0.f;
 
 	// 自分向きかつしきい値より近かったら動く
-	if (k * (ctrl->scene->ball.vel.x) < 0 && k * (ctrl->scene->ball.pos.x - (ctrl->object->pos.x + padding)) < 0)
+	if (k * (ctrl->scene->ball.vel.x) < 0 && abs(ctrl->scene->ball.pos.x - ctrl->object->pos.x) < padding)
 	{
 		// Botがパドルを操作
 		float pos_y = ctrl->target_pos.y;
 
 		// 死んだら中央に戻る
-		if (ctrl->scene->ball.pos.x < GameObject_GetX(&ctrl->scene->field, LEFT))
+		if (k * ctrl->scene->ball.pos.x < k * GameObject_GetX(&ctrl->scene->field, k > 0 ? LEFT : RIGHT))
 			pos_y = ClampF(ctrl->scene->ball.pos.y, ctrl->scene->field.pos.y - 80.f, ctrl->scene->field.pos.y + 80.f);
 
 		// Botが移動できる幅を制限
@@ -232,53 +237,62 @@ void GameController_Network_Update(GameController* ctrl)
 
 	// 切断確認 → Botに変更
 	if (GetLostNetWork() == ctrl->network_handle)
-		ctrl->UpdateControl = GameController_Bot_Update;
-
-	// パケットが届いていたら
-	if (GetNetWorkDataLength(ctrl->network_handle) != 0)
 	{
-		// 受信パケット
-		NetworkPacket yourpacket;
-		NetWorkRecv(ctrl->network_handle, &yourpacket, sizeof(NetworkPacket));
-
-		// 通信相手が操作するパドルを取得
-		GameObject paddle;
-		{
-			// 自分の情報の中での位置関係
-			BOOL b1 = (ctrl->enemy->pos.x < ctrl->object->pos.x);
-			// 相手の情報の中での位置関係
-			BOOL b2 = (yourpacket.paddle1.pos.x < yourpacket.paddle2.pos.x);
-			// 位置関係が一致しているパドルを選択
-			if ((b1 && b2) || (!b1 && !b2))
-				paddle = yourpacket.paddle2;
-			else
-				paddle = yourpacket.paddle1;
-		}
-
-		// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
-		{
-			float center = ctrl->scene->field.pos.x;
-			if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
-				(yourpacket.ball.pos.x < center && paddle.pos.x < center))
-			{
-				ctrl->scene->ball = yourpacket.ball;
-			}
-		}
-
-		// 相手のパケットのパドル情報を取得
-		*ctrl->object = paddle;
+		ctrl->Update = GameController_Bot_Update;
+		ctrl->UpdateControl = GameController_Bot_UpdateControl;
 	}
-
-	// 3フレームに1回パケットを送信
-	if (frame % 3 == 0)
+	else
 	{
-		// 送信パケット
-		NetworkPacket mypacket = {
-			ctrl->scene->ball,
-			*ctrl->enemy,
-			*ctrl->object
-		};
-		NetWorkSend(ctrl->network_handle, &mypacket, sizeof(NetworkPacket));
+		// パケットが届いていたら
+		if (GetNetWorkDataLength(ctrl->network_handle) >= sizeof(GameScene))
+		{
+			// 受信パケット
+			GameScene yourpacket;
+			NetWorkRecv(ctrl->network_handle, &yourpacket, sizeof(GameScene));
+
+			// 通信相手が操作するパドルを取得
+			GameObject paddle;
+			{
+				// 自分の情報の中での位置関係
+				BOOL b1 = (ctrl->enemy->pos.x < ctrl->object->pos.x);
+				// 相手の情報の中での位置関係
+				BOOL b2 = (yourpacket.paddle1.pos.x < yourpacket.paddle2.pos.x);
+				// 位置関係が一致しているパドルを選択
+				if ((b1 && b2) || (!b1 && !b2))
+					paddle = yourpacket.paddle2;
+				else
+					paddle = yourpacket.paddle1;
+			}
+
+			// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
+			{
+				float center = ctrl->scene->field.pos.x;
+				if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
+					(yourpacket.ball.pos.x < center && paddle.pos.x < center))
+				{
+					ctrl->scene->ball = yourpacket.ball;
+				}
+			}
+
+			// 相手のパケットのパドル情報を取得
+			*ctrl->object = paddle;
+
+			// その他情報を同期
+			if (ctrl->scene->game_state == STATE_DEMO)
+				ctrl->scene->game_state = yourpacket.game_state;
+			if (ctrl->scene->score.score1 < yourpacket.score.score1 ||
+				ctrl->scene->score.score2 < yourpacket.score.score2)
+				ctrl->scene->score = yourpacket.score;
+			ctrl->scene->field = yourpacket.field;
+		}
+
+		// 3フレームに1回パケットを送信
+		if (frame % 3 == 0)
+		{
+			// 送信パケット
+			GameScene* mypacket = ctrl->scene;
+			NetWorkSend(ctrl->network_handle, mypacket, sizeof(GameScene));
+		}
 	}
 }
 
