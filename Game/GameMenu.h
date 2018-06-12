@@ -1,5 +1,5 @@
 #pragma once
-#include "GameObject.h"
+#include "GameScene.h"
 #include "GameResource.h"
 
 // 構造体の宣言 ============================================================
@@ -7,7 +7,7 @@
 // <メニュー>
 typedef struct
 {
-	GameObject* field;
+	GameScene* scene;
 
 	int selected;
 } GameMenu;
@@ -17,7 +17,7 @@ typedef struct
 // <<メニュー>> --------------------------------------------------------
 
 // <メニュー作成>
-GameMenu GameMenu_Create(GameObject* field);
+GameMenu GameMenu_Create(GameScene* scene);
 
 // <メニュー更新>
 void GameMenu_Update(GameMenu* menu);

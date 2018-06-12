@@ -21,9 +21,9 @@ enum GameMenuState
 // <<メニュー>> --------------------------------------------------------
 
 // <メニュー作成>
-GameMenu GameMenu_Create(GameObject* field)
+GameMenu GameMenu_Create(GameScene* scene)
 {
-	return { field };
+	return { scene };
 }
 
 // <メニュー更新>
@@ -98,7 +98,7 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 	{
 		if (menu->selected == 2)
 		{
-			GameObject inner = *menu->field;
+			GameObject inner = menu->scene->field;
 			inner.size.x -= 80;
 			inner.size.y -= 160;
 			inner.pos.y += 40;
@@ -114,20 +114,20 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 void GameMenu_Render(GameMenu* menu, GameResource* res)
 {
 	{
-		GameObject inner = *menu->field;
+		GameObject inner = menu->scene->field;
 		inner.size.x -= 80;
 		inner.size.y -= 160;
 		inner.pos.y += 40;
 
 		{
 			SetDrawBlendMode(DX_BLENDMODE_INVDESTCOLOR, 255);
-			GameObject_Render(menu->field, 0x222222);
+			GameObject_Render(&menu->scene->field, 0x222222);
 			GameObject_Render(&inner, COLOR_WHITE);
 			SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 		}
 
 		DrawFormatStringToHandle(
-			(int)(menu->field->pos.x - GetDrawFormatStringWidthToHandle(res->font, GAME_TITLE) / 2),
+			(int)(menu->scene->field.pos.x - GetDrawFormatStringWidthToHandle(res->font, GAME_TITLE) / 2),
 			(int)(GameObject_GetY(&inner, TOP, -20)),
 			COLOR_BLACK, res->font, GAME_TITLE
 		);

@@ -1,9 +1,9 @@
 //__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/
 //! @file   GameMain.cpp
 //!
-//! @brief  Pong ノーマル課題
+//! @brief  Pong オリジナル課題
 //!
-//! @date   2018/06/01
+//! @date   2018/06/13
 //!
 //! @author GF1 26 山口 寛雅
 //__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/__/
@@ -118,7 +118,7 @@ void InitializeGame(void)
 	g_counter = 0;
 
 	// メニュー
-	g_menu = GameMenu_Create(&g_scene.field);
+	g_menu = GameMenu_Create(&g_scene);
 }
 
 
