@@ -129,7 +129,7 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -46), COLOR_BLACK, menu->resources->font_note, "(例) 127.0.0.1　　Enterで確定　　ピリオドを3つ含みます");
 						DrawBox((int)GameObject_GetX(&banner, CENTER_X) - 200, (int)GameObject_GetY(&banner, TOP, -60), (int)GameObject_GetX(&banner, CENTER_X) + 200, (int)GameObject_GetY(&banner, TOP, -90), 0xeeeeee, TRUE);
 					}
-					ip_valid = GameMenu_InputIP(menu, (int)GameObject_GetX(&banner, CENTER_X) - 200+ 6, (int)GameObject_GetY(&banner, TOP, -60) + 6, &ip);
+					ip_valid = GameMenu_InputIP(menu, (int)GameObject_GetX(&banner, CENTER_X) - 200 + 6, (int)GameObject_GetY(&banner, TOP, -60) + 6, &ip);
 					{
 						GameObject_Render(&banner, COLOR_WHITE);
 						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -40), COLOR_BLACK, menu->resources->font_menu, "接続中....");
@@ -236,14 +236,14 @@ void GameMenu_Render(GameMenu* menu)
 		"※ 設定「ローカルのアドレスにはプロキシサーバーを使わない」にチェックを付けて下さい\n"
 		"※ ファイアウォールの画面が出ましたら、「アクセスを許可する」を選択して下さい\n");
 
-	if (menu->failmsg_frame-->0)
+	if (menu->failmsg_frame-- > 0)
 	{
 		GameObject alert = menu->scene->field;
 		alert.pos.x += 160;
 		alert.pos.y += 80;
 		alert.size.x = 160;
 		alert.size.y = 40;
-		
+
 		GameObject_Render(&alert, COLOR_RED);
 		DrawFormatStringToHandle((int)GameObject_GetX(&alert, LEFT, -40), (int)GameObject_GetY(&alert, TOP, -10), COLOR_WHITE, menu->resources->font_menu,
 			"接続失敗");
