@@ -33,7 +33,7 @@ GameScene g_scene;
 GameControllers g_controllers;
 
 // <リソース> ----------------------------------------------------------
-GameResource g_resource;
+GameResource g_resources;
 
 // <メニュー> ----------------------------------------------------------
 GameMenu g_menu;
@@ -91,7 +91,7 @@ void InitializeGame(void)
 	//g_controllers.paddle2 = GameController_Bot_Create(&g_scene.paddle2, &g_scene, &g_scene.paddle1);
 
 	// リソース
-	g_resource = GameResource_Create();
+	g_resources = GameResource_Create();
 
 	// 得点
 	g_scene.score = GameScore_Create();
@@ -100,7 +100,7 @@ void InitializeGame(void)
 	g_scene.counter = 0;
 
 	// メニュー
-	g_menu = GameMenu_Create(&g_scene, &g_controllers, &g_resource);
+	g_menu = GameMenu_Create(&g_scene, &g_controllers, &g_resources);
 }
 
 
@@ -222,17 +222,17 @@ void UpdateGameScenePlay(void)
 
 	// 当たり判定
 	if (GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE))
-		PlaySoundMem(g_resource.sound_se02, DX_PLAYTYPE_BACK);
+		PlaySoundMem(g_resources.sound_se02, DX_PLAYTYPE_BACK);
 	{
 		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, FALSE);
 		if (side)
 		{
 			UpdateGameScore(side);
-			PlaySoundMem(g_resource.sound_se03, DX_PLAYTYPE_BACK);
+			PlaySoundMem(g_resources.sound_se03, DX_PLAYTYPE_BACK);
 		}
 	}
 	if (GameObject_Paddle_CollisionBall(&g_scene.paddle1, &g_scene.ball) || GameObject_Paddle_CollisionBall(&g_scene.paddle2, &g_scene.ball))
-		PlaySoundMem(g_resource.sound_se01, DX_PLAYTYPE_BACK);
+		PlaySoundMem(g_resources.sound_se01, DX_PLAYTYPE_BACK);
 	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, FALSE);
 	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, FALSE);
 }
@@ -291,7 +291,7 @@ void RenderGameSceneDemo(void)
 	// メニュー描画
 	GameMenu_Render(&g_menu);
 	// スコア描画
-	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resources.font_pong);
 }
 
 // <ゲームの描画処理:シーン:サーブ> -------------------------------------------
@@ -301,7 +301,7 @@ void RenderGameSceneServe(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resources.font_pong);
 	// パドル描画
 	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
 	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
@@ -316,7 +316,7 @@ void RenderGameScenePlay(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resources.font_pong);
 	// ガイド描画
 	GameController_RenderGuide(&g_controllers.paddle1);
 	GameController_RenderGuide(&g_controllers.paddle2);
@@ -336,5 +336,5 @@ void RenderGameScenePlay(void)
 //----------------------------------------------------------------------
 void FinalizeGame(void)
 {
-	GameResource_Delete(&g_resource);
+	GameResource_Delete(&g_resources);
 }

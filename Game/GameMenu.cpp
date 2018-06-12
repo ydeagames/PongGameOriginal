@@ -55,13 +55,18 @@ void GameMenu_Update(GameMenu* menu)
 	}
 }
 
-IPDATA GameMenu_InputIP(GameMenu* menu, int x, int y)
+// <IPを入力する>
+BOOL GameMenu_InputIP(GameMenu* menu, int x, int y, IPDATA* IP)
 {
 	char StrBuf[81];
-	// ＩＰの入力を行う
-	KeyInputSingleCharString(x, y, 80, StrBuf, FALSE);
 
-	IPDATA IP;
+	// IPの入力する
+	SetKeyInputStringColor2(DX_KEYINPSTRCOLOR_NORMAL_STR, COLOR_BLACK);
+	SetKeyInputStringColor2(DX_KEYINPSTRCOLOR_NORMAL_CURSOR, COLOR_BLACK);
+	SetKeyInputStringColor2(DX_KEYINPSTRCOLOR_SELECT_STR, COLOR_BLACK);
+	if (KeyInputSingleCharString(x, y, 30, StrBuf, TRUE) != 1)
+		return FALSE;
+
 	{
 		char StrBuf2[81];
 		int i, j, k;
@@ -72,7 +77,7 @@ IPDATA GameMenu_InputIP(GameMenu* menu, int x, int y)
 			if (StrBuf[i] == '.') j++;
 		}
 
-		// もし３つピリオドがなかった場合は入力のし直し
+		// もし３つピリオドがあった場合
 		if (j == 3)
 		{
 			// 文字列からＩＰを抜き出す
@@ -86,10 +91,10 @@ IPDATA GameMenu_InputIP(GameMenu* menu, int x, int y)
 					StrBuf2[j] = '\0';
 					switch (k)
 					{
-					case 0:IP.d1 = atoi(StrBuf2); break;
-					case 1:IP.d2 = atoi(StrBuf2); break;
-					case 2:IP.d3 = atoi(StrBuf2); break;
-					case 3:IP.d4 = atoi(StrBuf2); break;
+					case 0:IP->d1 = atoi(StrBuf2); break;
+					case 1:IP->d2 = atoi(StrBuf2); break;
+					case 2:IP->d3 = atoi(StrBuf2); break;
+					case 3:IP->d4 = atoi(StrBuf2); break;
 					}
 					k++;
 					if (k == 4) break;
@@ -103,9 +108,11 @@ IPDATA GameMenu_InputIP(GameMenu* menu, int x, int y)
 				}
 				i++;
 			}
+			return TRUE;
 		}
 	}
-	return IP;
+
+	return FALSE;
 }
 
 // <メニュー決定が押されたとき>
@@ -115,13 +122,39 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 	{
 		if (menu->selected == 1)
 		{
-			GameObject inner = menu->scene->field;
-			inner.size.x -= 80;
-			inner.size.y -= 160;
-			inner.pos.y += 40;
+			// IPアドレス
+			IPDATA ip;
+			// 有効なIPアドレス
+			BOOL ip_valid = FALSE;
 
 			{
-				IPDATA ip = GameMenu_InputIP(menu, (int)GameObject_GetX(&inner, LEFT, -100), (int)(inner.pos.y + 100));
+				GameObject inner = menu->scene->field;
+				inner.size.x -= 80;
+				inner.size.y -= 160;
+				inner.pos.y += 40;
+
+				// KeyInputSingleCharString がゲームループを止めてしまうのでここで描画
+				{
+					GameObject banner = menu->scene->field;
+					banner.size.y = 115;
+					{
+						GameObject_Render(&banner, COLOR_WHITE);
+						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -20), COLOR_BLACK, menu->resources->font_menu, "▼通信相手のIPアドレスを入力して下さい");
+						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -46), COLOR_BLACK, menu->resources->font_note, "(例) 127.0.0.1　　ピリオドを3つ含みます");
+						DrawBox((int)GameObject_GetX(&banner, CENTER_X) - 200, (int)GameObject_GetY(&banner, TOP, -60), (int)GameObject_GetX(&banner, CENTER_X) + 200, (int)GameObject_GetY(&banner, TOP, -90), 0xeeeeee, TRUE);
+					}
+					ip_valid = GameMenu_InputIP(menu, (int)GameObject_GetX(&banner, CENTER_X) - 200+ 6, (int)GameObject_GetY(&banner, TOP, -60) + 6, &ip);
+					{
+						GameObject_Render(&banner, COLOR_WHITE);
+						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -40), COLOR_BLACK, menu->resources->font_menu, "接続中....");
+						ScreenFlip();
+					}
+				}
+			}
+
+			// 有効なIPアドレスかどうか
+			if (ip_valid)
+			{
 				HNET handle = ConnectNetWork(ip, 9850);
 				if (handle != -1)
 				{
