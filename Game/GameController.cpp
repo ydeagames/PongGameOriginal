@@ -265,15 +265,17 @@ void GameController_Network_Update(GameController* ctrl)
 			}
 
 			{
-				float center = ctrl->scene->field.pos.x;
-				// 範囲外にボールがある時は優先して相手のパケットのボール情報を取得
-				if (ctrl->scene->ball.pos.x < GameObject_GetX(&ctrl->scene->field, LEFT) || GameObject_GetX(&ctrl->scene->field, RIGHT) < ctrl->scene->ball.pos.x)
+				float left = GameObject_GetX(&ctrl->scene->field, LEFT);
+				float center = GameObject_GetX(&ctrl->scene->field, CENTER_X);
+				float right = GameObject_GetX(&ctrl->scene->field, RIGHT);
+				// サーブ時は優先して相手のパケットのボール情報を取得
+				if (yourpacket.packet == PACKET_START || yourpacket.packet == PACKET_END || yourpacket.packet == PACKET_SERVE)
 				{
 					ctrl->scene->ball = yourpacket.ball;
 				}
-				// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
-				else if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
-					(yourpacket.ball.pos.x < center && paddle.pos.x < center))
+				// 画面内かつ半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
+				else if (((center < yourpacket.ball.pos.x && center < paddle.pos.x) && (yourpacket.ball.pos.x < right && paddle.pos.x < right)) ||
+					((left < yourpacket.ball.pos.x && left < paddle.pos.x) && (yourpacket.ball.pos.x < center && paddle.pos.x < center)))
 				{
 					ctrl->scene->ball = yourpacket.ball;
 				}
@@ -283,9 +285,18 @@ void GameController_Network_Update(GameController* ctrl)
 			*ctrl->object = paddle;
 
 			// その他情報を同期
-			if ((yourpacket.score.score1 == 0 && yourpacket.score.score2 == 0) || (yourpacket.score.score1 >= SCORE_GOAL || yourpacket.score.score1 >= SCORE_GOAL))
+			if (yourpacket.packet == PACKET_START)
+			{
+				// X座標を画面中央へ戻す
+				GameObject_Ball_SetPosXDefault(&ctrl->scene->ball, &ctrl->scene->field);
+
+				// パドルを初期位置へ
+				GameObject_Paddle_SetPosYDefault(&ctrl->scene->paddle1);
+				GameObject_Paddle_SetPosYDefault(&ctrl->scene->paddle2);
+			}
+			if (yourpacket.packet == PACKET_START || yourpacket.packet == PACKET_END)
 				ctrl->scene->game_state = yourpacket.game_state;
-			if (!ctrl->network_server_flag)
+			if (yourpacket.packet == PACKET_START || yourpacket.packet == PACKET_END || yourpacket.packet == PACKET_SCORE)
 				ctrl->scene->score = yourpacket.score;
 			ctrl->scene->field = yourpacket.field;
 		}
@@ -296,6 +307,7 @@ void GameController_Network_Update(GameController* ctrl)
 			// 送信パケット
 			GameScene* mypacket = ctrl->scene;
 			NetWorkSend(ctrl->network_handle, mypacket, sizeof(GameScene));
+			mypacket->packet = PACKET_NONE;
 		}
 	}
 }

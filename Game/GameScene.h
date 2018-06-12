@@ -17,6 +17,16 @@ enum GameState
 	STATE_PLAY
 };
 
+// <パケット> -----------------------------------------------------------
+enum GamePacket
+{
+	PACKET_NONE = 0,
+	PACKET_START,
+	PACKET_SCORE,
+	PACKET_END,
+	PACKET_SERVE
+};
+
 // 構造体の宣言 ============================================================
 
 // <メニュー>
@@ -39,6 +49,9 @@ typedef struct
 
 	// <得点>
 	GameScore score;
+
+	// <パケット>
+	GamePacket packet;
 
 	// <サーブ待機>
 	int counter;
