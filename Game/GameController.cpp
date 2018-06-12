@@ -20,6 +20,12 @@ GameController GameController_Create(GameObject* object, void(*updateFunc)(GameC
 }
 
 // <コントローラー更新>
+void GameController_Update(GameController* ctrl)
+{
+	ctrl->Update(ctrl);
+}
+
+// <コントローラー操作更新>
 void GameController_UpdateControl(GameController* ctrl)
 {
 	ctrl->target_pos.y = GameController_GetTargetY(ctrl->field, ctrl->ball, ctrl->object, ctrl->enemy);

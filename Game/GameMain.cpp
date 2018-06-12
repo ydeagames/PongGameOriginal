@@ -165,6 +165,10 @@ void UpdateGameSceneDemo(void)
 		}
 	}
 
+	// コントローラー更新
+	GameController_Update(&g_controllers.paddle1);
+	GameController_Update(&g_controllers.paddle2);
+
 	// 座標更新
 	GameObject_UpdatePosition(&g_scene.ball);
 
@@ -194,6 +198,10 @@ void UpdateGameSceneServe(void)
 		g_scene.counter = 0;
 	}
 
+	// コントローラー更新
+	GameController_Update(&g_controllers.paddle1);
+	GameController_Update(&g_controllers.paddle2);
+
 	// 操作
 	GameController_UpdateControl(&g_controllers.paddle1);
 	GameController_UpdateControl(&g_controllers.paddle2);
@@ -214,6 +222,10 @@ void UpdateGameSceneServe(void)
 // <ゲームの更新処理:シーン:プレイ> ------------------------------------
 void UpdateGameScenePlay(void)
 {
+	// コントローラー更新
+	GameController_Update(&g_controllers.paddle1);
+	GameController_Update(&g_controllers.paddle2);
+
 	// 操作
 	GameController_UpdateControl(&g_controllers.paddle1);
 	GameController_UpdateControl(&g_controllers.paddle2);
