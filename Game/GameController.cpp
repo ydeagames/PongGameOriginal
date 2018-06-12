@@ -264,10 +264,15 @@ void GameController_Network_Update(GameController* ctrl)
 					paddle = yourpacket.paddle1;
 			}
 
-			// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
 			{
 				float center = ctrl->scene->field.pos.x;
-				if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
+				// 範囲外にボールがある時は優先して相手のパケットのボール情報を取得
+				if (ctrl->scene->ball.pos.x < GameObject_GetX(&ctrl->scene->field, LEFT) || GameObject_GetX(&ctrl->scene->field, RIGHT) < ctrl->scene->ball.pos.x)
+				{
+					ctrl->scene->ball = yourpacket.ball;
+				}
+				// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
+				else if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
 					(yourpacket.ball.pos.x < center && paddle.pos.x < center))
 				{
 					ctrl->scene->ball = yourpacket.ball;
@@ -278,10 +283,9 @@ void GameController_Network_Update(GameController* ctrl)
 			*ctrl->object = paddle;
 
 			// その他情報を同期
-			if (ctrl->scene->game_state == STATE_DEMO)
+			if ((yourpacket.score.score1 == 0 && yourpacket.score.score2 == 0) || (yourpacket.score.score1 >= SCORE_GOAL || yourpacket.score.score1 >= SCORE_GOAL))
 				ctrl->scene->game_state = yourpacket.game_state;
-			if (ctrl->scene->score.score1 < yourpacket.score.score1 ||
-				ctrl->scene->score.score2 < yourpacket.score.score2)
+			if (!ctrl->network_server_flag)
 				ctrl->scene->score = yourpacket.score;
 			ctrl->scene->field = yourpacket.field;
 		}

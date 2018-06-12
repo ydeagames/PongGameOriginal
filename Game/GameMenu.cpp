@@ -1,21 +1,6 @@
 #include "GameMenu.h"
 #include "GameMain.h"
 
-// 列挙型の定義 ============================================================
-
-// <メニュー状態> -----------------------------------------------------
-enum GameMenuState
-{
-	// 待機中
-	STATE_MENU_IDLE,
-
-	// 接続待受
-	STATE_MENU_WAITING,
-
-	// 接続中
-	STATE_MENU_CONNECTING
-};
-
 // 関数の定義 ==============================================================
 
 // <<メニュー>> --------------------------------------------------------
@@ -36,6 +21,7 @@ void GameMenu_Update(GameMenu* menu)
 		if (handle != -1)
 		{
 			menu->controllers->paddle1 = GameController_Network_Create(&menu->scene->paddle1, menu->scene, &menu->scene->paddle2, TRUE, handle);
+			menu->controllers->paddle2 = GameController_Player_Create(&menu->scene->paddle2, menu->scene, &menu->scene->paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 			// 接続待ちを解除
 			StopListenNetWork();
@@ -177,7 +163,15 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 		}
 	}
 
-	return menu->selected == 0;
+	if (menu->selected == 0)
+	{
+		StopListenNetWork();
+
+		menu->listening = FALSE;
+
+		return TRUE;
+	}
+	return FALSE;
 }
 
 // <メニュー描画>
