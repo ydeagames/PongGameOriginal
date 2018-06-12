@@ -46,6 +46,6 @@ void GameScore_Render(GameScore* score)
 	// フォントを使用した文字の幅を取得
 	int width_score1 = GetDrawFormatStringWidthToHandle(score->font, "%2d", score->score1);
 
-	DrawFormatStringToHandle((float)(score->field->pos.x - 100 - width_score1), (float)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, score->font, "%2d", score->score1);
-	DrawFormatStringToHandle((float)(score->field->pos.x + 100), (float)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, score->font, "%2d", score->score2);
+	DrawFormatStringToHandle((int)(score->field->pos.x - 100 - width_score1), (int)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, score->font, "%2d", score->score1);
+	DrawFormatStringToHandle((int)(score->field->pos.x + 100), (int)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, score->font, "%2d", score->score2);
 }
