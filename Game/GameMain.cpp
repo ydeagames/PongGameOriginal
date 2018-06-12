@@ -100,7 +100,7 @@ void InitializeGame(void)
 	g_scene.counter = 0;
 
 	// メニュー
-	g_menu = GameMenu_Create(&g_scene, &g_controllers);
+	g_menu = GameMenu_Create(&g_scene, &g_controllers, &g_resource);
 }
 
 
@@ -289,7 +289,7 @@ void RenderGameSceneDemo(void)
 	// ボール描画
 	GameObject_Render(&g_scene.ball, COLOR_WHITE);
 	// メニュー描画
-	GameMenu_Render(&g_menu, &g_resource);
+	GameMenu_Render(&g_menu);
 	// スコア描画
 	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
 }

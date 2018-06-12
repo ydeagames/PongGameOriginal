@@ -14,6 +14,8 @@ typedef struct
 	int selected;
 	BOOL listening;
 	BOOL connected;
+
+	GameResource* resources;
 } GameMenu;
 
 // 関数の宣言 ==============================================================
@@ -21,7 +23,7 @@ typedef struct
 // <<メニュー>> --------------------------------------------------------
 
 // <メニュー作成>
-GameMenu GameMenu_Create(GameScene* scene, GameControllers* controllers);
+GameMenu GameMenu_Create(GameScene* scene, GameControllers* controllers, GameResource* resources);
 
 // <メニュー更新>
 void GameMenu_Update(GameMenu* menu);
@@ -30,4 +32,4 @@ void GameMenu_Update(GameMenu* menu);
 BOOL GameMenu_OnPressed(GameMenu* menu);
 
 // <メニュー描画>
-void GameMenu_Render(GameMenu* menu, GameResource* res);
+void GameMenu_Render(GameMenu* menu);

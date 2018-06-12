@@ -21,9 +21,9 @@ enum GameMenuState
 // <<メニュー>> --------------------------------------------------------
 
 // <メニュー作成>
-GameMenu GameMenu_Create(GameScene* scene, GameControllers* controllers)
+GameMenu GameMenu_Create(GameScene* scene, GameControllers* controllers, GameResource* resources)
 {
-	return { scene, controllers, 0, FALSE };
+	return { scene, controllers, 0, FALSE, FALSE, resources };
 }
 
 // <メニュー更新>
@@ -145,7 +145,7 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 }
 
 // <メニュー描画>
-void GameMenu_Render(GameMenu* menu, GameResource* res)
+void GameMenu_Render(GameMenu* menu)
 {
 	GameObject inner = menu->scene->field;
 	inner.size.x -= 80;
@@ -160,39 +160,39 @@ void GameMenu_Render(GameMenu* menu, GameResource* res)
 	}
 
 	DrawFormatStringToHandle(
-		(int)(menu->scene->field.pos.x - GetDrawFormatStringWidthToHandle(res->font_pong, GAME_TITLE) / 2),
+		(int)(menu->scene->field.pos.x - GetDrawFormatStringWidthToHandle(menu->resources->font_pong, GAME_TITLE) / 2),
 		(int)(GameObject_GetY(&inner, TOP, -20)),
-		COLOR_BLACK, res->font_pong, GAME_TITLE
+		COLOR_BLACK, menu->resources->font_pong, GAME_TITLE
 	);
 
 	{
 		IPDATA ip;
 		GetMyIPAddress(&ip);
-		DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, -320), (int)(inner.pos.y + 120), COLOR_BLACK, res->font_menu, "IPアドレス: %d.%d.%d.%d", ip.d1, ip.d2, ip.d3, ip.d4);
+		DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, -320), (int)(inner.pos.y + 120), COLOR_BLACK, menu->resources->font_menu, "IPアドレス: %d.%d.%d.%d", ip.d1, ip.d2, ip.d3, ip.d4);
 	}
 
 	{
 		float padding_x = -50;
 		float padding_y = 20;
-		DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y - 20 + padding_y), COLOR_BLACK, res->font_menu,
+		DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y - 20 + padding_y), COLOR_BLACK, menu->resources->font_menu,
 			"%s プレイ開始", menu->selected == 0 ? "→" : "　");
 		if (menu->connected)
-			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 20 + padding_y), COLOR_BLACK, res->font_menu,
+			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 20 + padding_y), COLOR_BLACK, menu->resources->font_menu,
 				"   接続完了!");
 		else if (menu->listening)
-			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 20 + padding_y), COLOR_BLACK, res->font_menu,
+			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 20 + padding_y), COLOR_BLACK, menu->resources->font_menu,
 				"   他のプレイヤーを待っています...\n"
 				"　　　IPアドレスを他の人に伝えて下さい\n");
 		else
 		{
-			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 20 + padding_y), COLOR_BLACK, res->font_menu,
+			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 20 + padding_y), COLOR_BLACK, menu->resources->font_menu,
 				"%s 他のプレイヤーに参加する", menu->selected == 1 ? "→" : "　");
-			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 60 + padding_y), COLOR_BLACK, res->font_menu,
+			DrawFormatStringToHandle((int)GameObject_GetX(&inner, LEFT, padding_x), (int)(inner.pos.y + 60 + padding_y), COLOR_BLACK, menu->resources->font_menu,
 				"%s 他のプレイヤーを待つ", menu->selected == 2 ? "→" : "　");
 		}
 	}
 
-	DrawFormatStringToHandle((int)GameObject_GetX(&menu->scene->field, LEFT, -10), (int)GameObject_GetY(&menu->scene->field, BOTTOM, -40), COLOR_WHITE, res->font_note,
+	DrawFormatStringToHandle((int)GameObject_GetX(&menu->scene->field, LEFT, -10), (int)GameObject_GetY(&menu->scene->field, BOTTOM, -40), COLOR_WHITE, menu->resources->font_note,
 		"※ 設定「ローカルのアドレスにはプロキシサーバーを使わない」にチェックを付けて下さい\n"
 		"※ ファイアウォールの画面が出ましたら、「アクセスを許可する」を選択して下さい\n");
 }
