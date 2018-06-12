@@ -12,6 +12,8 @@ typedef struct
 	GameControllers* controllers;
 
 	int selected;
+	BOOL listening;
+	BOOL connected;
 } GameMenu;
 
 // ŠÖ”‚ÌéŒ¾ ==============================================================

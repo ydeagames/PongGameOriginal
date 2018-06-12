@@ -6,7 +6,9 @@
 typedef struct
 {
 	// <フォント>
-	HFNT font;
+	HFNT font_pong;
+	HFNT font_menu;
+	HFNT font_note;
 
 	// <サウンド>
 	HSND sound_se01;
@@ -18,7 +20,9 @@ typedef struct
 
 // <フォント> ----------------------------------------------------------
 
-#define FONT_SIZE_SCORE 100
+#define FONT_SIZE_PONG 100
+#define FONT_SIZE_MENU 20
+#define FONT_SIZE_NOTE 12
 
 // 関数の宣言 ==============================================================
 

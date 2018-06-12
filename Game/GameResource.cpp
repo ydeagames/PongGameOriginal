@@ -3,9 +3,11 @@
 // 定数の定義 ==============================================================
 
 // <フォント> ----------------------------------------------------------
-#define FONT_CUSTOM_FILE "Resources\\Fonts\\TheSlavicFont-Regular.ttf"
-#define FONT_CUSTOM_NAME "The Slavic Font"
-#define FONT_NAME "HGP創英角ｺﾞｼｯｸUB"
+#define FONT_FILE_PONG_CUSTOM "Resources\\Fonts\\TheSlavicFont-Regular.ttf"
+#define FONT_NAME_PONG_CUSTOM "The Slavic Font"
+#define FONT_NAME_PONG "HGP創英角ｺﾞｼｯｸUB"
+#define FONT_NAME_MENU "HGP創英角ｺﾞｼｯｸUB"
+#define FONT_NAME_NOTE "HGS創英ﾌﾟﾚｾﾞﾝｽEB"
 
 // <サウンド> ----------------------------------------------------------
 #define SOUND_SE01 "Resources\\Audio\\SE01.ogg"
@@ -22,10 +24,12 @@ GameResource GameResource_Create(void)
 	GameResource res;
 
 	// フォント
-	if (AddFontResourceEx(FONT_CUSTOM_FILE, FR_PRIVATE, NULL) > 0)
-		res.font = CreateFontToHandle(FONT_CUSTOM_NAME, FONT_SIZE_SCORE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
+	if (AddFontResourceEx(FONT_FILE_PONG_CUSTOM, FR_PRIVATE, NULL) > 0)
+		res.font_pong = CreateFontToHandle(FONT_NAME_PONG_CUSTOM, FONT_SIZE_PONG, 3, DX_FONTTYPE_ANTIALIASING_4X4);
 	else
-		res.font = CreateFontToHandle(FONT_NAME, FONT_SIZE_SCORE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
+		res.font_pong = CreateFontToHandle(FONT_NAME_PONG, FONT_SIZE_PONG, 3, DX_FONTTYPE_ANTIALIASING_4X4);
+	res.font_menu = CreateFontToHandle(FONT_NAME_MENU, FONT_SIZE_MENU, 3, DX_FONTTYPE_ANTIALIASING_4X4);
+	res.font_note = CreateFontToHandle(FONT_NAME_NOTE, FONT_SIZE_NOTE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
 
 	// サウンド
 	res.sound_se01 = LoadSoundMem(SOUND_SE01);
@@ -39,8 +43,10 @@ GameResource GameResource_Create(void)
 void GameResource_Delete(GameResource* res)
 {
 	// フォント
-	DeleteFontToHandle(res->font);
-	RemoveFontResourceEx(FONT_CUSTOM_FILE, FR_PRIVATE, NULL);
+	DeleteFontToHandle(res->font_pong);
+	RemoveFontResourceEx(FONT_FILE_PONG_CUSTOM, FR_PRIVATE, NULL);
+	DeleteFontToHandle(res->font_menu);
+	DeleteFontToHandle(res->font_note);
 
 	// サウンド
 	DeleteSoundMem(res->sound_se01);

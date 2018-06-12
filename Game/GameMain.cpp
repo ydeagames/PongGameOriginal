@@ -286,12 +286,12 @@ void RenderGameSceneDemo(void)
 	// <オブジェクト描画>
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
-	// スコア描画
-	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font);
 	// ボール描画
 	GameObject_Render(&g_scene.ball, COLOR_WHITE);
 	// メニュー描画
 	GameMenu_Render(&g_menu, &g_resource);
+	// スコア描画
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
 }
 
 // <ゲームの描画処理:シーン:サーブ> -------------------------------------------
@@ -301,7 +301,7 @@ void RenderGameSceneServe(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
 	// パドル描画
 	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
 	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
@@ -316,7 +316,7 @@ void RenderGameScenePlay(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font_pong);
 	// ガイド描画
 	GameController_RenderGuide(&g_controllers.paddle1);
 	GameController_RenderGuide(&g_controllers.paddle2);
