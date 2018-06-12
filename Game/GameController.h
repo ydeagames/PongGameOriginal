@@ -18,6 +18,10 @@ struct tag_GameController
 	// 継承ができないので仕方なくPlayer用の変数
 	int player_key_up;
 	int player_key_down;
+
+	// 継承ができないので仕方なくネットワーク用の変数
+	BOOL network_server_flag;
+	HNET network_handle;
 };
 
 // 関数の宣言 ==============================================================
@@ -45,3 +49,9 @@ GameController GameController_Bot_Create(GameObject* object, GameObject* field, 
 
 // <Botガイド描画>
 void GameController_RenderGuide(GameController* ctrl);
+
+
+// <<ネットワークコントローラー>> --------------------------------------
+
+// <コントローラー作成>
+GameController GameController_Network_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, BOOL server_flag, HNET handle);

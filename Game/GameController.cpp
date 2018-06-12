@@ -4,6 +4,7 @@
 
 void GameController_Player_Update(GameController* ctrl);
 void GameController_Bot_Update(GameController* ctrl);
+void GameController_Network_Update(GameController* ctrl);
 
 // 関数の定義 ==============================================================
 
@@ -148,6 +149,7 @@ GameController GameController_Bot_Create(GameObject* object, GameObject* field, 
 	return  GameController_Create(object, GameController_Bot_Update, field, ball, enemy);
 }
 
+// Botがパドルを操作
 void GameController_Bot_Update(GameController* ctrl)
 {
 	// Botが動き始めるしきい値
@@ -183,4 +185,64 @@ void GameController_RenderGuide(GameController* ctrl)
 	GameObject target = *ctrl->object;
 	target.pos = ctrl->target_pos;
 	GameObject_Render(&target, 0x222222);
+}
+
+// <<ネットワークコントローラー>> --------------------------------------
+
+// <コントローラー作成>
+GameController GameController_Network_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, BOOL server_flag, HNET handle)
+{
+	GameController ctrl = GameController_Create(object, GameController_Network_Update, field, ball, enemy);
+	ctrl.network_server_flag = server_flag;
+	ctrl.network_handle = handle;
+	return ctrl;
+}
+
+typedef struct
+{
+	GameObject ball;
+	GameObject paddle1;
+	GameObject paddle2;
+} NetworkPacket;
+
+// 通信相手がパドルとボールを操作
+void GameController_Network_Update(GameController* ctrl)
+{
+	static int frame = 0;
+	frame++;
+
+	// 切断確認 → Botに変更
+	if (GetLostNetWork() == ctrl->network_handle)
+		ctrl->UpdateControl = GameController_Bot_Update;
+
+	if (frame % 60 == 0)
+	{
+		NetworkPacket yourpacket;
+		NetWorkRecv(ctrl->network_handle, &yourpacket, sizeof(NetworkPacket));
+
+		float center = ctrl->field->pos.x;
+		GameObject paddle_enemy;
+		{
+			BOOL b1 = (ctrl->enemy->pos.x < ctrl->object->pos.x);
+			BOOL b2 = (yourpacket.paddle1.pos.x < yourpacket.paddle2.pos.x);
+			if (b1 ^ b2)
+				paddle_enemy = yourpacket.paddle1;
+			else
+				paddle_enemy = yourpacket.paddle2;
+		}
+
+		if ((center < yourpacket.ball.pos.x && paddle_enemy.pos.x < center) ||
+			(yourpacket.ball.pos.x < center && center < paddle_enemy.pos.x))
+		{
+			*ctrl->ball = yourpacket.ball;
+		}
+		*ctrl->enemy = paddle_enemy;
+
+		NetworkPacket mypacket = {
+			*ctrl->ball,
+			*ctrl->object,
+			*ctrl->enemy
+		};
+		NetWorkSend(ctrl->network_handle, &mypacket, sizeof(NetworkPacket));
+	}
 }
