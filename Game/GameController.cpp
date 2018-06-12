@@ -86,7 +86,7 @@ float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject*
 
 	// ボールのY座標
 	{
-		ball_base_y = ball->pos.y;
+		ball_base_y = ball->pos.y - screen_top_y;
 		if (ball->vel.y < 0)
 			ball_base_y *= -1; // 速度が上向きのとき、上にターゲットが存在する
 	}
@@ -99,12 +99,12 @@ float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject*
 	{
 		int count = 0;
 		float pos_y_loop = ball_absolute_y;
-		while (pos_y_loop < screen_top_y)
+		while (pos_y_loop < 0)
 		{
 			pos_y_loop += screen_height;
 			count++;
 		}
-		while (pos_y_loop > screen_bottom_y)
+		while (pos_y_loop > screen_height)
 		{
 			pos_y_loop -= screen_height;
 			count++;
@@ -114,10 +114,10 @@ float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject*
 		if (count % 2 == 0)
 			target_pos_y = pos_y_loop;
 		else
-			target_pos_y = screen_bottom_y - pos_y_loop;
+			target_pos_y = screen_height - pos_y_loop;
 	}
 
-	return target_pos_y;
+	return target_pos_y + screen_top_y;
 }
 
 // <<プレイヤーコントローラー>> ----------------------------------------

@@ -202,7 +202,7 @@ float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball)
 // <ボールオブジェクト作成>
 GameObject GameObject_Field_Create(void)
 {
-	return GameObject_Create(Vec2_Create(SCREEN_CENTER_X, SCREEN_CENTER_Y+50), Vec2_Create(), Vec2_Create(SCREEN_WIDTH-100, SCREEN_HEIGHT-100));
+	return GameObject_Create(Vec2_Create(SCREEN_CENTER_X, SCREEN_CENTER_Y), Vec2_Create(), Vec2_Create(SCREEN_WIDTH, SCREEN_HEIGHT));
 }
 
 // <フィールド上下衝突処理>
