@@ -21,9 +21,9 @@ enum GameMenuState
 // <<メニュー>> --------------------------------------------------------
 
 // <メニュー作成>
-GameMenu GameMenu_Create(GameScene* scene)
+GameMenu GameMenu_Create(GameScene* scene, GameControllers* controllers)
 {
-	return { scene };
+	return { scene, controllers };
 }
 
 // <メニュー更新>
@@ -108,7 +108,7 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 
 				if (handle != -1)
 				{
-					menu->scene->paddle1_ctrl = GameController_Network_Create(&menu->scene->paddle1, &menu->scene->field, &menu->scene->ball, &menu->scene->paddle2, TRUE, handle);
+					menu->controllers->paddle1 = GameController_Network_Create(&menu->scene->paddle1, &menu->scene->field, &menu->scene->ball, &menu->scene->paddle2, TRUE, handle);
 					break;
 				}
 			}
@@ -128,8 +128,8 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 				HNET handle = ConnectNetWork(ip, 9850);
 				if (handle != -1)
 				{
-					menu->scene->paddle1_ctrl = GameController_Player_Create(&menu->scene->paddle1, &menu->scene->field, &menu->scene->ball, &menu->scene->paddle2, PAD_INPUT_UP, PAD_INPUT_DOWN);
-					menu->scene->paddle2_ctrl = GameController_Network_Create(&menu->scene->paddle2, &menu->scene->field, &menu->scene->ball, &menu->scene->paddle1, FALSE, handle);
+					menu->controllers->paddle1 = GameController_Player_Create(&menu->scene->paddle1, &menu->scene->field, &menu->scene->ball, &menu->scene->paddle2, PAD_INPUT_UP, PAD_INPUT_DOWN);
+					menu->controllers->paddle2 = GameController_Network_Create(&menu->scene->paddle2, &menu->scene->field, &menu->scene->ball, &menu->scene->paddle1, FALSE, handle);
 				}
 			}
 		}

@@ -3,21 +3,24 @@
 // 関数の宣言 ==============================================================
 
 void GameController_Player_Update(GameController* ctrl);
+void GameController_Player_UpdateControl(GameController* ctrl);
 void GameController_Bot_Update(GameController* ctrl);
+void GameController_Bot_UpdateControl(GameController* ctrl);
 void GameController_Network_Update(GameController* ctrl);
+void GameController_Network_UpdateControl(GameController* ctrl);
 
 // 関数の定義 ==============================================================
 
 // <<コントローラー>> --------------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Create(GameObject* object, void(*ctrlFunc)(GameController*), GameObject* field, GameObject* ball, GameObject* enemy)
+GameController GameController_Create(GameObject* object, void(*updateFunc)(GameController*), void(*updateCtrlFunc)(GameController*), GameObject* field, GameObject* ball, GameObject* enemy)
 {
-	return { object, ctrlFunc, object->pos, field, ball, enemy };
+	return { object, updateFunc, updateCtrlFunc, object->pos, field, ball, enemy };
 }
 
 // <コントローラー更新>
-void GameController_Update(GameController* ctrl)
+void GameController_UpdateControl(GameController* ctrl)
 {
 	ctrl->target_pos.y = GameController_GetTargetY(ctrl->field, ctrl->ball, ctrl->object, ctrl->enemy);
 
@@ -125,14 +128,18 @@ float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject*
 // <コントローラー作成>
 GameController GameController_Player_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, int key_up, int key_down)
 {
-	GameController ctrl = GameController_Create(object, GameController_Player_Update, field, ball, enemy);
+	GameController ctrl = GameController_Create(object, GameController_Player_Update, GameController_Player_UpdateControl, field, ball, enemy);
 	ctrl.player_key_up = key_up;
 	ctrl.player_key_down = key_down;
 	return ctrl;
 }
 
-// キー入力でパドルを操作
 void GameController_Player_Update(GameController* ctrl)
+{
+}
+
+// キー入力でパドルを操作
+void GameController_Player_UpdateControl(GameController* ctrl)
 {
 	ctrl->object->vel.y = 0.f;
 	if (IsButtonDown(ctrl->player_key_up))
@@ -146,11 +153,15 @@ void GameController_Player_Update(GameController* ctrl)
 // <コントローラー作成>
 GameController GameController_Bot_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy)
 {
-	return  GameController_Create(object, GameController_Bot_Update, field, ball, enemy);
+	return  GameController_Create(object, GameController_Bot_Update, GameController_Bot_UpdateControl, field, ball, enemy);
+}
+
+void GameController_Bot_Update(GameController* ctrl)
+{
 }
 
 // Botがパドルを操作
-void GameController_Bot_Update(GameController* ctrl)
+void GameController_Bot_UpdateControl(GameController* ctrl)
 {
 	// Botが動き始めるしきい値
 	float padding = 260 * BALL_VEL_X_MIN / PADDLE_VEL;
@@ -192,7 +203,7 @@ void GameController_RenderGuide(GameController* ctrl)
 // <コントローラー作成>
 GameController GameController_Network_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, BOOL server_flag, HNET handle)
 {
-	GameController ctrl = GameController_Create(object, GameController_Network_Update, field, ball, enemy);
+	GameController ctrl = GameController_Create(object, GameController_Network_Update, GameController_Network_UpdateControl, field, ball, enemy);
 	ctrl.network_server_flag = server_flag;
 	ctrl.network_handle = handle;
 	return ctrl;
@@ -263,4 +274,8 @@ void GameController_Network_Update(GameController* ctrl)
 		};
 		NetWorkSend(ctrl->network_handle, &mypacket, sizeof(NetworkPacket));
 	}
+}
+
+void GameController_Network_UpdateControl(GameController* ctrl)
+{
 }

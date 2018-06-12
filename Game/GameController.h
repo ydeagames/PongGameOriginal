@@ -8,6 +8,7 @@ typedef struct tag_GameController GameController;
 struct tag_GameController
 {
 	GameObject* object;
+	void(*Update)(GameController*);
 	void(*UpdateControl)(GameController*);
 
 	Vec2 target_pos;
@@ -29,10 +30,13 @@ struct tag_GameController
 // <<コントローラー>> --------------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Create(GameObject* object, void(*ctrlFunc)(GameController*), GameObject* field, GameObject* ball, GameObject* enemy);
+GameController GameController_Create(GameObject* object, void(*updateFunc)(GameController*), void(*updateCtrlFunc)(GameController*), GameObject* field, GameObject* ball, GameObject* enemy);
 
 // <コントローラー更新>
 void GameController_Update(GameController* ctrl);
+
+// <コントローラー操作更新>
+void GameController_UpdateControl(GameController* ctrl);
 
 // <ボール着弾点予想アルゴリズム>
 float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject* paddle_myself, GameObject* paddle_enemy);

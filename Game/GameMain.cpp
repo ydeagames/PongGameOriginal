@@ -11,7 +11,7 @@
 // ヘッダファイルの読み込み ================================================
 #include "GameMain.h"
 #include "GameObject.h"
-#include "GameController.h"
+#include "GameControllers.h"
 #include "GameScore.h"
 #include "GameResource.h"
 #include "GameMenu.h"
@@ -42,17 +42,14 @@ enum GameState
 
 // グローバル変数の宣言 ====================================================
 
-// <シーン状態> --------------------------------------------------------
-int g_game_state;
-
 // <シーン> ------------------------------------------------------------
 GameScene g_scene;
 
+// <コントローラー> ----------------------------------------------------
+GameControllers g_controllers;
+
 // <リソース> ----------------------------------------------------------
 GameResource g_resource;
-
-// <サーブ待機> --------------------------------------------------------
-int g_counter;
 
 // <メニュー> ----------------------------------------------------------
 GameMenu g_menu;
@@ -84,7 +81,7 @@ void UpdateGameScore(ObjectSide side);
 void InitializeGame(void)
 {
 	// シーン状態
-	g_game_state = STATE_DEMO;
+	g_scene.game_state = STATE_DEMO;
 
 	// フィールド
 	g_scene.field = GameObject_Field_Create();
@@ -100,25 +97,25 @@ void InitializeGame(void)
 	g_scene.paddle1 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_scene.paddle1, RIGHT, SCREEN_LEFT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_scene.paddle1);
-	g_scene.paddle1_ctrl = GameController_Bot_Create(&g_scene.paddle1, &g_scene.field, &g_scene.ball, &g_scene.paddle2);
+	g_controllers.paddle1 = GameController_Bot_Create(&g_scene.paddle1, &g_scene.field, &g_scene.ball, &g_scene.paddle2);
 
 	// パドル2
 	g_scene.paddle2 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_scene.paddle2, LEFT, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
-	g_scene.paddle2_ctrl = GameController_Player_Create(&g_scene.paddle2, &g_scene.field, &g_scene.ball, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
+	g_controllers.paddle2 = GameController_Player_Create(&g_scene.paddle2, &g_scene.field, &g_scene.ball, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 	// リソース
 	g_resource = GameResource_Create();
 
 	// 得点
-	g_scene.score = GameScore_Create(&g_scene.field);
+	g_scene.score = GameScore_Create();
 
 	// サーブ待機
-	g_counter = 0;
+	g_scene.counter = 0;
 
 	// メニュー
-	g_menu = GameMenu_Create(&g_scene);
+	g_menu = GameMenu_Create(&g_scene, &g_controllers);
 }
 
 
@@ -131,7 +128,7 @@ void InitializeGame(void)
 //----------------------------------------------------------------------
 void UpdateGame(void)
 {
-	switch (g_game_state)
+	switch (g_scene.game_state)
 	{
 	case STATE_DEMO:
 		UpdateGameSceneDemo();
@@ -164,7 +161,7 @@ void UpdateGameSceneDemo(void)
 			GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
 
 			// シーンをプレイに変更
-			g_game_state = STATE_PLAY;
+			g_scene.game_state = STATE_PLAY;
 		}
 	}
 
@@ -183,23 +180,23 @@ void UpdateGameSceneDemo(void)
 void UpdateGameSceneServe(void)
 {
 	// 待機&初期化
-	g_counter++;
+	g_scene.counter++;
 
 	// 時間経過で
-	if (g_counter >= SERVE_WAIT_TIME)
+	if (g_scene.counter >= SERVE_WAIT_TIME)
 	{
 		// X座標を画面中央へ戻す
 		GameObject_Ball_SetPosXDefault(&g_scene.ball, &g_scene.field);
 
 		// シーンをプレイに変更
-		g_game_state = STATE_PLAY;
+		g_scene.game_state = STATE_PLAY;
 
-		g_counter = 0;
+		g_scene.counter = 0;
 	}
 
 	// 操作
-	GameController_Update(&g_scene.paddle1_ctrl);
-	GameController_Update(&g_scene.paddle2_ctrl);
+	GameController_UpdateControl(&g_controllers.paddle1);
+	GameController_UpdateControl(&g_controllers.paddle2);
 
 	// 座標更新
 	GameObject_UpdatePosition(&g_scene.ball);
@@ -218,8 +215,8 @@ void UpdateGameSceneServe(void)
 void UpdateGameScenePlay(void)
 {
 	// 操作
-	GameController_Update(&g_scene.paddle1_ctrl);
-	GameController_Update(&g_scene.paddle2_ctrl);
+	GameController_UpdateControl(&g_controllers.paddle1);
+	GameController_UpdateControl(&g_controllers.paddle2);
 
 	// 座標更新
 	GameObject_UpdatePosition(&g_scene.ball);
@@ -256,11 +253,11 @@ void UpdateGameScore(ObjectSide side)
 		GameObject_Ball_SetVelYDefault(&g_scene.ball);
 
 		// シーンをデモに変更
-		g_game_state = STATE_DEMO;
+		g_scene.game_state = STATE_DEMO;
 	}
 	else
 		// シーンをサーブに変更
-		g_game_state = STATE_SERVE;
+		g_scene.game_state = STATE_SERVE;
 }
 
 //----------------------------------------------------------------------
@@ -272,7 +269,7 @@ void UpdateGameScore(ObjectSide side)
 //----------------------------------------------------------------------
 void RenderGame(void)
 {
-	switch (g_game_state)
+	switch (g_scene.game_state)
 	{
 	case STATE_DEMO:
 		RenderGameSceneDemo();
@@ -293,7 +290,7 @@ void RenderGameSceneDemo(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, g_resource.font);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font);
 	// ボール描画
 	GameObject_Render(&g_scene.ball, COLOR_WHITE);
 	// メニュー描画
@@ -307,7 +304,7 @@ void RenderGameSceneServe(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, g_resource.font);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font);
 	// パドル描画
 	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
 	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
@@ -322,10 +319,10 @@ void RenderGameScenePlay(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_scene.score, g_resource.font);
+	GameScore_Render(&g_scene.score, &g_scene.field, g_resource.font);
 	// ガイド描画
-	GameController_RenderGuide(&g_scene.paddle1_ctrl);
-	GameController_RenderGuide(&g_scene.paddle2_ctrl);
+	GameController_RenderGuide(&g_controllers.paddle1);
+	GameController_RenderGuide(&g_controllers.paddle2);
 	// パドル描画
 	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
 	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);

@@ -8,8 +8,6 @@ typedef struct
 {
 	int score1;	// 1Pのスコア
 	int score2;	// 2Pのスコア
-
-	GameObject* field;
 } GameScore;
 
 // 定数の定義 ==============================================================
@@ -22,7 +20,7 @@ typedef struct
 // <<スコア>> ----------------------------------------------------
 
 // <スコア作成>
-GameScore GameScore_Create(GameObject* field);
+GameScore GameScore_Create(void);
 
 // <スコア追加>
 void GameScore_Add(GameScore* score, ObjectSide side);
@@ -34,4 +32,4 @@ void GameScore_Clear(GameScore* score);
 BOOL GameScore_IsFinished(GameScore* score);
 
 // <スコア描画>
-void GameScore_Render(GameScore* score, HFNT font);
+void GameScore_Render(GameScore* score, GameObject* field, HFNT font);
