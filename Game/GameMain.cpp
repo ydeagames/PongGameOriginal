@@ -13,6 +13,7 @@
 #include "GameObject.h"
 #include "GameController.h"
 #include "GameScore.h"
+#include "GameResource.h"
 
 // 列挙型の定義 ============================================================
 
@@ -32,24 +33,11 @@ enum GameState
 
 // 定数の定義 ==============================================================
 
-// <フォント> ----------------------------------------------------------
-#define FONT_CUSTOM_FILE "Resources\\Fonts\\TheSlavicFont-Regular.ttf"
-#define FONT_CUSTOM_NAME "The Slavic Font"
-#define FONT_NAME "HGP創英角ｺﾞｼｯｸUB"
-
-// <サウンド> ----------------------------------------------------------
-#define SOUND_SE01 "Resources\\Audio\\SE01.ogg"
-#define SOUND_SE02 "Resources\\Audio\\SE02.ogg"
-#define SOUND_SE03 "Resources\\Audio\\SE03.ogg"
-
 // <サーブ待機> --------------------------------------------------------
 #define SERVE_WAIT_TIME 2*60
 
 
 // グローバル変数の宣言 ====================================================
-
-// <入力> --------------------------------------------------------------
-int g_input_state;
 
 // <シーン状態> --------------------------------------------------------
 int g_game_state;
@@ -68,16 +56,11 @@ GameController g_paddle1_ctrl;
 GameObject g_paddle2;
 GameController g_paddle2_ctrl;
 
-// <フォント> ----------------------------------------------------------
-HFNT g_font;
+// <リソース> ----------------------------------------------------------
+GameResource g_resource;
 
 // <得点> --------------------------------------------------------------
 GameScore g_score;
-
-// <サウンド> ----------------------------------------------------------
-HSND g_sound_se01;
-HSND g_sound_se02;
-HSND g_sound_se03;
 
 // <サーブ待機> --------------------------------------------------------
 int g_counter;
@@ -96,9 +79,6 @@ void RenderGameSceneServe(void);
 void RenderGameScenePlay(void);
 
 void UpdateGameScore(ObjectSide side);
-
-// <ゲームの描画処理:オブジェクト> -------------------------------------
-void RenderGameObjectPaddleGuide(void);
 
 // 関数の定義 ==============================================================
 
@@ -136,19 +116,11 @@ void InitializeGame(void)
 	GameObject_Paddle_SetPosYDefault(&g_paddle2);
 	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, &g_field, &g_ball, &g_paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
-	// フォント
-	if (AddFontResourceEx(FONT_CUSTOM_FILE, FR_PRIVATE, NULL) > 0)
-		g_font = CreateFontToHandle(FONT_CUSTOM_NAME, FONT_SIZE_SCORE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
-	else
-		g_font = CreateFontToHandle(FONT_NAME, FONT_SIZE_SCORE, 3, DX_FONTTYPE_ANTIALIASING_4X4);
+	// リソース
+	g_resource = GameResource_Create();
 
 	// 得点
-	g_score = GameScore_Create(&g_field, g_font);
-
-	// サウンド
-	g_sound_se01 = LoadSoundMem(SOUND_SE01);
-	g_sound_se02 = LoadSoundMem(SOUND_SE02);
-	g_sound_se03 = LoadSoundMem(SOUND_SE03);
+	g_score = GameScore_Create(&g_field);
 
 	// サーブ待機
 	g_counter = 0;
@@ -164,9 +136,6 @@ void InitializeGame(void)
 //----------------------------------------------------------------------
 void UpdateGame(void)
 {
-	// キーボード取得
-	g_input_state = GetJoypadInputState(DX_INPUT_KEY_PAD1);
-
 	switch (g_game_state)
 	{
 	case STATE_DEMO:
@@ -187,7 +156,7 @@ void UpdateGameSceneDemo(void)
 	// 待機&初期化
 	{
 		// 入力されたら
-		if (g_input_state & PAD_INPUT_10)
+		if (IsButtonDown(PAD_INPUT_10))
 		{
 			// 点数リセット
 			GameScore_Clear(&g_score);
@@ -216,7 +185,6 @@ void UpdateGameSceneDemo(void)
 void UpdateGameSceneServe(void)
 {
 	// 待機&初期化
-
 	g_counter++;
 
 	// 時間経過で
@@ -262,17 +230,17 @@ void UpdateGameScenePlay(void)
 
 	// 当たり判定
 	if (GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE))
-		PlaySoundMem(g_sound_se02, DX_PLAYTYPE_BACK);
+		PlaySoundMem(g_resource.sound_se02, DX_PLAYTYPE_BACK);
 	{
 		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_field, &g_ball, FALSE);
 		if (side)
 		{
 			UpdateGameScore(side);
-			PlaySoundMem(g_sound_se03, DX_PLAYTYPE_BACK);
+			PlaySoundMem(g_resource.sound_se03, DX_PLAYTYPE_BACK);
 		}
 	}
 	if (GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball) || GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball))
-		PlaySoundMem(g_sound_se01, DX_PLAYTYPE_BACK);
+		PlaySoundMem(g_resource.sound_se01, DX_PLAYTYPE_BACK);
 	GameObject_Field_CollisionVertical(&g_field, &g_paddle1, FALSE);
 	GameObject_Field_CollisionVertical(&g_field, &g_paddle2, FALSE);
 }
@@ -327,7 +295,7 @@ void RenderGameSceneDemo(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_field);
 	// スコア描画
-	GameScore_Render(&g_score);
+	GameScore_Render(&g_score, g_resource.font);
 	// ボール描画
 	GameObject_Render(&g_ball, COLOR_WHITE);
 }
@@ -339,7 +307,7 @@ void RenderGameSceneServe(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_field);
 	// スコア描画
-	GameScore_Render(&g_score);
+	GameScore_Render(&g_score, g_resource.font);
 	// パドル描画
 	GameObject_Render(&g_paddle1, COLOR_WHITE);
 	GameObject_Render(&g_paddle2, COLOR_WHITE);
@@ -354,25 +322,15 @@ void RenderGameScenePlay(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_field);
 	// スコア描画
-	GameScore_Render(&g_score);
-	RenderGameObjectPaddleGuide();
+	GameScore_Render(&g_score, g_resource.font);
+	// ガイド描画
+	GameController_RenderGuide(&g_paddle1_ctrl);
+	GameController_RenderGuide(&g_paddle2_ctrl);
 	// パドル描画
 	GameObject_Render(&g_paddle1, COLOR_WHITE);
 	GameObject_Render(&g_paddle2, COLOR_WHITE);
 	// ボール描画
 	GameObject_Render(&g_ball, COLOR_WHITE);
-}
-
-// <ゲームの描画処理:パドルガイド> -------------------------------------
-void RenderGameObjectPaddleGuide(void)
-{
-	// ガイド表示
-	GameObject paddle1_target = g_paddle1;
-	GameObject paddle2_target = g_paddle2;
-	paddle1_target.pos = g_paddle1_ctrl.target_pos;
-	paddle2_target.pos = g_paddle2_ctrl.target_pos;
-	GameObject_Render(&paddle1_target, 0x222222);
-	GameObject_Render(&paddle2_target, 0x222222);
 }
 
 //----------------------------------------------------------------------
@@ -384,12 +342,5 @@ void RenderGameObjectPaddleGuide(void)
 //----------------------------------------------------------------------
 void FinalizeGame(void)
 {
-	// フォント
-	DeleteFontToHandle(g_font);
-	RemoveFontResourceEx(FONT_CUSTOM_FILE, FR_PRIVATE, NULL);
-
-	// サウンド
-	DeleteSoundMem(g_sound_se01);
-	DeleteSoundMem(g_sound_se02);
-	DeleteSoundMem(g_sound_se03);
+	GameResource_Delete(&g_resource);
 }

@@ -6,9 +6,9 @@
 // <<スコア>> ----------------------------------------------------
 
 // <スコア作成>
-GameScore GameScore_Create(GameObject* field, HFNT font)
+GameScore GameScore_Create(GameObject* field)
 {
-	return { 0, 0, field, font };
+	return { 0, 0, field };
 }
 
 // <スコア追加>
@@ -39,13 +39,13 @@ BOOL GameScore_IsFinished(GameScore* score)
 }
 
 // <スコア描画>
-void GameScore_Render(GameScore* score)
+void GameScore_Render(GameScore* score, HFNT font)
 {
 	// スコア描画
 
 	// フォントを使用した文字の幅を取得
-	int width_score1 = GetDrawFormatStringWidthToHandle(score->font, "%2d", score->score1);
+	int width_score1 = GetDrawFormatStringWidthToHandle(font, "%2d", score->score1);
 
-	DrawFormatStringToHandle((int)(score->field->pos.x - 100 - width_score1), (int)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, score->font, "%2d", score->score1);
-	DrawFormatStringToHandle((int)(score->field->pos.x + 100), (int)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, score->font, "%2d", score->score2);
+	DrawFormatStringToHandle((int)(score->field->pos.x - 100 - width_score1), (int)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, font, "%2d", score->score1);
+	DrawFormatStringToHandle((int)(score->field->pos.x + 100), (int)(GameObject_GetY(score->field, TOP, 10)), COLOR_WHITE, font, "%2d", score->score2);
 }

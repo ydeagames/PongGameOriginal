@@ -3,30 +3,26 @@
 
 // 構造体の宣言 ============================================================
 
-// <ゲームオブジェクト>
+// <ゲームスコア>
 typedef struct
 {
 	int score1;	// 1Pのスコア
 	int score2;	// 2Pのスコア
 
 	GameObject* field;
-	HFNT font;
 } GameScore;
 
 // 定数の定義 ==============================================================
 
-// <得点> --------------------------------------------------------------
+// <得点>
 #define SCORE_GOAL 11		// 最大スコア
-
-// <フォント> ----------------------------------------------------------
-#define FONT_SIZE_SCORE 100
 
 // 関数の宣言 ==============================================================
 
 // <<スコア>> ----------------------------------------------------
 
 // <スコア作成>
-GameScore GameScore_Create(GameObject* field, HFNT font);
+GameScore GameScore_Create(GameObject* field);
 
 // <スコア追加>
 void GameScore_Add(GameScore* score, ObjectSide side);
@@ -38,4 +34,4 @@ void GameScore_Clear(GameScore* score);
 BOOL GameScore_IsFinished(GameScore* score);
 
 // <スコア描画>
-void GameScore_Render(GameScore* score);
+void GameScore_Render(GameScore* score, HFNT font);
