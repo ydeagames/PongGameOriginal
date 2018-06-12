@@ -140,7 +140,7 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 					{
 						GameObject_Render(&banner, COLOR_WHITE);
 						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -20), COLOR_BLACK, menu->resources->font_menu, "▼通信相手のIPアドレスを入力して下さい");
-						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -46), COLOR_BLACK, menu->resources->font_note, "(例) 127.0.0.1　　ピリオドを3つ含みます");
+						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -46), COLOR_BLACK, menu->resources->font_note, "(例) 127.0.0.1　　Enterで確定　　ピリオドを3つ含みます");
 						DrawBox((int)GameObject_GetX(&banner, CENTER_X) - 200, (int)GameObject_GetY(&banner, TOP, -60), (int)GameObject_GetX(&banner, CENTER_X) + 200, (int)GameObject_GetY(&banner, TOP, -90), 0xeeeeee, TRUE);
 					}
 					ip_valid = GameMenu_InputIP(menu, (int)GameObject_GetX(&banner, CENTER_X) - 200+ 6, (int)GameObject_GetY(&banner, TOP, -60) + 6, &ip);
