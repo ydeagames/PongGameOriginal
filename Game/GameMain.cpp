@@ -20,6 +20,9 @@
 
 // 定数の定義 ==============================================================
 
+// <点差ガイド> --------------------------------------------------------
+#define SCORE_TO_GUID 6
+
 // <サーブ待機> --------------------------------------------------------
 #define SERVE_WAIT_TIME 2*60
 
@@ -324,8 +327,10 @@ void RenderGameScenePlay(void)
 	// スコア描画
 	GameScore_Render(&g_scene.score, &g_scene.field, g_resources.font_pong);
 	// ガイド描画
-	GameController_RenderGuide(&g_controllers.paddle1);
-	GameController_RenderGuide(&g_controllers.paddle2);
+	if (g_scene.score.score2 - g_scene.score.score1 >= SCORE_TO_GUID)
+		GameController_RenderGuide(&g_controllers.paddle1);
+	if (g_scene.score.score1 - g_scene.score.score2 >= SCORE_TO_GUID)
+		GameController_RenderGuide(&g_controllers.paddle2);
 	// パドル描画
 	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
 	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
