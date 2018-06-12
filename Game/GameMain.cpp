@@ -15,6 +15,7 @@
 #include "GameScore.h"
 #include "GameResource.h"
 #include "GameMenu.h"
+#include "GameScene.h"
 
 
 // 列挙型の定義 ============================================================
@@ -44,25 +45,11 @@ enum GameState
 // <シーン状態> --------------------------------------------------------
 int g_game_state;
 
-// <フィールド> --------------------------------------------------------
-GameObject g_field;
-
-// <ボール> ------------------------------------------------------------
-GameObject g_ball;
-
-// <パドル1> -----------------------------------------------------------
-GameObject g_paddle1;
-GameController g_paddle1_ctrl;
-
-// <パドル2> -----------------------------------------------------------
-GameObject g_paddle2;
-GameController g_paddle2_ctrl;
+// <シーン> ------------------------------------------------------------
+GameScene g_scene;
 
 // <リソース> ----------------------------------------------------------
 GameResource g_resource;
-
-// <得点> --------------------------------------------------------------
-GameScore g_score;
 
 // <サーブ待機> --------------------------------------------------------
 int g_counter;
@@ -100,38 +87,38 @@ void InitializeGame(void)
 	g_game_state = STATE_DEMO;
 
 	// フィールド
-	g_field = GameObject_Field_Create();
+	g_scene.field = GameObject_Field_Create();
 
 	// ボール
-	g_ball = GameObject_Ball_Create();
-	GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
-	GameObject_Ball_SetPosYDefault(&g_ball, &g_field);
-	GameObject_Ball_SetVelXDefault(&g_ball);
-	GameObject_Ball_SetVelYDefault(&g_ball);
+	g_scene.ball = GameObject_Ball_Create();
+	GameObject_Ball_SetPosXDefault(&g_scene.ball, &g_scene.field);
+	GameObject_Ball_SetPosYDefault(&g_scene.ball, &g_scene.field);
+	GameObject_Ball_SetVelXDefault(&g_scene.ball);
+	GameObject_Ball_SetVelYDefault(&g_scene.ball);
 
 	// パドル1
-	g_paddle1 = GameObject_Paddle_Create();
-	GameObject_SetX(&g_paddle1, RIGHT, SCREEN_LEFT, 64);
-	GameObject_Paddle_SetPosYDefault(&g_paddle1);
-	g_paddle1_ctrl = GameController_Bot_Create(&g_paddle1, &g_field, &g_ball, &g_paddle2);
+	g_scene.paddle1 = GameObject_Paddle_Create();
+	GameObject_SetX(&g_scene.paddle1, RIGHT, SCREEN_LEFT, 64);
+	GameObject_Paddle_SetPosYDefault(&g_scene.paddle1);
+	g_scene.paddle1_ctrl = GameController_Bot_Create(&g_scene.paddle1, &g_scene.field, &g_scene.ball, &g_scene.paddle2);
 
 	// パドル2
-	g_paddle2 = GameObject_Paddle_Create();
-	GameObject_SetX(&g_paddle2, LEFT, SCREEN_RIGHT, 64);
-	GameObject_Paddle_SetPosYDefault(&g_paddle2);
-	g_paddle2_ctrl = GameController_Player_Create(&g_paddle2, &g_field, &g_ball, &g_paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
+	g_scene.paddle2 = GameObject_Paddle_Create();
+	GameObject_SetX(&g_scene.paddle2, LEFT, SCREEN_RIGHT, 64);
+	GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
+	g_scene.paddle2_ctrl = GameController_Player_Create(&g_scene.paddle2, &g_scene.field, &g_scene.ball, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 	// リソース
 	g_resource = GameResource_Create();
 
 	// 得点
-	g_score = GameScore_Create(&g_field);
+	g_scene.score = GameScore_Create(&g_scene.field);
 
 	// サーブ待機
 	g_counter = 0;
 
 	// メニュー
-	g_menu = GameMenu_Create(&g_field);
+	g_menu = GameMenu_Create(&g_scene.field);
 }
 
 
@@ -167,14 +154,14 @@ void UpdateGameSceneDemo(void)
 		if (IsButtonDown(PAD_INPUT_10)&&GameMenu_OnPressed(&g_menu))
 		{
 			// 点数リセット
-			GameScore_Clear(&g_score);
+			GameScore_Clear(&g_scene.score);
 
 			// X座標を画面中央へ戻す
-			GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
+			GameObject_Ball_SetPosXDefault(&g_scene.ball, &g_scene.field);
 
 			// パドルを初期位置へ
-			GameObject_Paddle_SetPosYDefault(&g_paddle1);
-			GameObject_Paddle_SetPosYDefault(&g_paddle2);
+			GameObject_Paddle_SetPosYDefault(&g_scene.paddle1);
+			GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
 
 			// シーンをプレイに変更
 			g_game_state = STATE_PLAY;
@@ -182,11 +169,11 @@ void UpdateGameSceneDemo(void)
 	}
 
 	// 座標更新
-	GameObject_UpdatePosition(&g_ball);
+	GameObject_UpdatePosition(&g_scene.ball);
 
 	// 当たり判定
-	GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE);
-	GameObject_Field_CollisionHorizontal(&g_field, &g_ball, TRUE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE);
+	GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, TRUE);
 
 	// メニュー更新
 	GameMenu_Update(&g_menu);
@@ -202,7 +189,7 @@ void UpdateGameSceneServe(void)
 	if (g_counter >= SERVE_WAIT_TIME)
 	{
 		// X座標を画面中央へ戻す
-		GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
+		GameObject_Ball_SetPosXDefault(&g_scene.ball, &g_scene.field);
 
 		// シーンをプレイに変更
 		g_game_state = STATE_PLAY;
@@ -211,62 +198,62 @@ void UpdateGameSceneServe(void)
 	}
 
 	// 操作
-	GameController_Update(&g_paddle1_ctrl);
-	GameController_Update(&g_paddle2_ctrl);
+	GameController_Update(&g_scene.paddle1_ctrl);
+	GameController_Update(&g_scene.paddle2_ctrl);
 
 	// 座標更新
-	GameObject_UpdatePosition(&g_ball);
-	GameObject_UpdatePosition(&g_paddle1);
-	GameObject_UpdatePosition(&g_paddle2);
+	GameObject_UpdatePosition(&g_scene.ball);
+	GameObject_UpdatePosition(&g_scene.paddle1);
+	GameObject_UpdatePosition(&g_scene.paddle2);
 
 	// 当たり判定
-	GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE);
-	GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball);
-	GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball);
-	GameObject_Field_CollisionVertical(&g_field, &g_paddle1, FALSE);
-	GameObject_Field_CollisionVertical(&g_field, &g_paddle2, FALSE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE);
+	GameObject_Paddle_CollisionBall(&g_scene.paddle1, &g_scene.ball);
+	GameObject_Paddle_CollisionBall(&g_scene.paddle2, &g_scene.ball);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, FALSE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, FALSE);
 }
 
 // <ゲームの更新処理:シーン:プレイ> ------------------------------------
 void UpdateGameScenePlay(void)
 {
 	// 操作
-	GameController_Update(&g_paddle1_ctrl);
-	GameController_Update(&g_paddle2_ctrl);
+	GameController_Update(&g_scene.paddle1_ctrl);
+	GameController_Update(&g_scene.paddle2_ctrl);
 
 	// 座標更新
-	GameObject_UpdatePosition(&g_ball);
-	GameObject_UpdatePosition(&g_paddle1);
-	GameObject_UpdatePosition(&g_paddle2);
+	GameObject_UpdatePosition(&g_scene.ball);
+	GameObject_UpdatePosition(&g_scene.paddle1);
+	GameObject_UpdatePosition(&g_scene.paddle2);
 
 	// 当たり判定
-	if (GameObject_Field_CollisionVertical(&g_field, &g_ball, TRUE))
+	if (GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE))
 		PlaySoundMem(g_resource.sound_se02, DX_PLAYTYPE_BACK);
 	{
-		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_field, &g_ball, FALSE);
+		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, FALSE);
 		if (side)
 		{
 			UpdateGameScore(side);
 			PlaySoundMem(g_resource.sound_se03, DX_PLAYTYPE_BACK);
 		}
 	}
-	if (GameObject_Paddle_CollisionBall(&g_paddle1, &g_ball) || GameObject_Paddle_CollisionBall(&g_paddle2, &g_ball))
+	if (GameObject_Paddle_CollisionBall(&g_scene.paddle1, &g_scene.ball) || GameObject_Paddle_CollisionBall(&g_scene.paddle2, &g_scene.ball))
 		PlaySoundMem(g_resource.sound_se01, DX_PLAYTYPE_BACK);
-	GameObject_Field_CollisionVertical(&g_field, &g_paddle1, FALSE);
-	GameObject_Field_CollisionVertical(&g_field, &g_paddle2, FALSE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, FALSE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, FALSE);
 }
 
 // <ゲームの更新処理:スコア加算>
 void UpdateGameScore(ObjectSide side)
 {
 	// 得点処理
-	GameScore_Add(&g_score, side);
+	GameScore_Add(&g_scene.score, side);
 
-	if (GameScore_IsFinished(&g_score))
+	if (GameScore_IsFinished(&g_scene.score))
 	{
-		GameObject_Ball_SetPosXDefault(&g_ball, &g_field);
-		GameObject_Ball_SetVelXDefault(&g_ball);
-		GameObject_Ball_SetVelYDefault(&g_ball);
+		GameObject_Ball_SetPosXDefault(&g_scene.ball, &g_scene.field);
+		GameObject_Ball_SetVelXDefault(&g_scene.ball);
+		GameObject_Ball_SetVelYDefault(&g_scene.ball);
 
 		// シーンをデモに変更
 		g_game_state = STATE_DEMO;
@@ -304,11 +291,11 @@ void RenderGameSceneDemo(void)
 {
 	// <オブジェクト描画>
 	// フィールド描画
-	GameObject_Field_Render(&g_field);
+	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_score, g_resource.font);
+	GameScore_Render(&g_scene.score, g_resource.font);
 	// ボール描画
-	GameObject_Render(&g_ball, COLOR_WHITE);
+	GameObject_Render(&g_scene.ball, COLOR_WHITE);
 	// メニュー描画
 	GameMenu_Render(&g_menu, &g_resource);
 }
@@ -318,14 +305,14 @@ void RenderGameSceneServe(void)
 {
 	// <オブジェクト描画>
 	// フィールド描画
-	GameObject_Field_Render(&g_field);
+	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_score, g_resource.font);
+	GameScore_Render(&g_scene.score, g_resource.font);
 	// パドル描画
-	GameObject_Render(&g_paddle1, COLOR_WHITE);
-	GameObject_Render(&g_paddle2, COLOR_WHITE);
+	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
+	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
 	// ボール描画
-	GameObject_Render(&g_ball, COLOR_WHITE);
+	GameObject_Render(&g_scene.ball, COLOR_WHITE);
 }
 
 // <ゲームの描画処理:シーン:プレイ> -------------------------------------------
@@ -333,17 +320,17 @@ void RenderGameScenePlay(void)
 {
 	// <オブジェクト描画>
 	// フィールド描画
-	GameObject_Field_Render(&g_field);
+	GameObject_Field_Render(&g_scene.field);
 	// スコア描画
-	GameScore_Render(&g_score, g_resource.font);
+	GameScore_Render(&g_scene.score, g_resource.font);
 	// ガイド描画
-	GameController_RenderGuide(&g_paddle1_ctrl);
-	GameController_RenderGuide(&g_paddle2_ctrl);
+	GameController_RenderGuide(&g_scene.paddle1_ctrl);
+	GameController_RenderGuide(&g_scene.paddle2_ctrl);
 	// パドル描画
-	GameObject_Render(&g_paddle1, COLOR_WHITE);
-	GameObject_Render(&g_paddle2, COLOR_WHITE);
+	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
+	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
 	// ボール描画
-	GameObject_Render(&g_ball, COLOR_WHITE);
+	GameObject_Render(&g_scene.ball, COLOR_WHITE);
 }
 
 //----------------------------------------------------------------------
