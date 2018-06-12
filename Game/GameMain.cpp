@@ -97,13 +97,13 @@ void InitializeGame(void)
 	g_scene.paddle1 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_scene.paddle1, RIGHT, SCREEN_LEFT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_scene.paddle1);
-	g_controllers.paddle1 = GameController_Bot_Create(&g_scene.paddle1, &g_scene.field, &g_scene.ball, &g_scene.paddle2);
+	g_controllers.paddle1 = GameController_Bot_Create(&g_scene.paddle1, &g_scene, &g_scene.paddle2);
 
 	// パドル2
 	g_scene.paddle2 = GameObject_Paddle_Create();
 	GameObject_SetX(&g_scene.paddle2, LEFT, SCREEN_RIGHT, 64);
 	GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
-	g_controllers.paddle2 = GameController_Player_Create(&g_scene.paddle2, &g_scene.field, &g_scene.ball, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
+	g_controllers.paddle2 = GameController_Player_Create(&g_scene.paddle2, &g_scene, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 
 	// リソース
 	g_resource = GameResource_Create();

@@ -14,9 +14,9 @@ void GameController_Network_UpdateControl(GameController* ctrl);
 // <<コントローラー>> --------------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Create(GameObject* object, void(*updateFunc)(GameController*), void(*updateCtrlFunc)(GameController*), GameObject* field, GameObject* ball, GameObject* enemy)
+GameController GameController_Create(GameObject* object, void(*updateFunc)(GameController*), void(*updateCtrlFunc)(GameController*), GameScene* scene, GameObject* enemy)
 {
-	return { object, updateFunc, updateCtrlFunc, object->pos, field, ball, enemy };
+	return { object, updateFunc, updateCtrlFunc, object->pos, scene, enemy };
 }
 
 // <コントローラー更新>
@@ -28,7 +28,7 @@ void GameController_Update(GameController* ctrl)
 // <コントローラー操作更新>
 void GameController_UpdateControl(GameController* ctrl)
 {
-	ctrl->target_pos.y = GameController_GetTargetY(ctrl->field, ctrl->ball, ctrl->object, ctrl->enemy);
+	ctrl->target_pos.y = GameController_GetTargetY(&ctrl->scene->field, &ctrl->scene->ball, ctrl->object, ctrl->enemy);
 
 	ctrl->UpdateControl(ctrl);
 }
@@ -132,9 +132,9 @@ float GameController_GetTargetY(GameObject* field, GameObject* ball, GameObject*
 // <<プレイヤーコントローラー>> ----------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Player_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, int key_up, int key_down)
+GameController GameController_Player_Create(GameObject* object, GameScene* scene, GameObject* enemy, int key_up, int key_down)
 {
-	GameController ctrl = GameController_Create(object, GameController_Player_Update, GameController_Player_UpdateControl, field, ball, enemy);
+	GameController ctrl = GameController_Create(object, GameController_Player_Update, GameController_Player_UpdateControl, scene, enemy);
 	ctrl.player_key_up = key_up;
 	ctrl.player_key_down = key_down;
 	return ctrl;
@@ -157,9 +157,9 @@ void GameController_Player_UpdateControl(GameController* ctrl)
 // <<Botコントローラー>> -----------------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Bot_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy)
+GameController GameController_Bot_Create(GameObject* object, GameScene* scene, GameObject* enemy)
 {
-	return  GameController_Create(object, GameController_Bot_Update, GameController_Bot_UpdateControl, field, ball, enemy);
+	return  GameController_Create(object, GameController_Bot_Update, GameController_Bot_UpdateControl, scene, enemy);
 }
 
 void GameController_Bot_Update(GameController* ctrl)
@@ -177,14 +177,14 @@ void GameController_Bot_UpdateControl(GameController* ctrl)
 	ctrl->object->vel.y = 0.f;
 
 	// 自分向きかつしきい値より近かったら動く
-	if (k * (ctrl->ball->vel.x) < 0 && k * (ctrl->ball->pos.x - (ctrl->object->pos.x + padding)) < 0)
+	if (k * (ctrl->scene->ball.vel.x) < 0 && k * (ctrl->scene->ball.pos.x - (ctrl->object->pos.x + padding)) < 0)
 	{
 		// Botがパドルを操作
 		float pos_y = ctrl->target_pos.y;
 
 		// 死んだら中央に戻る
-		if (ctrl->ball->pos.x < GameObject_GetX(ctrl->field, LEFT))
-			pos_y = ClampF(ctrl->ball->pos.y, ctrl->field->pos.y - 80.f, ctrl->field->pos.y + 80.f);
+		if (ctrl->scene->ball.pos.x < GameObject_GetX(&ctrl->scene->field, LEFT))
+			pos_y = ClampF(ctrl->scene->ball.pos.y, ctrl->scene->field.pos.y - 80.f, ctrl->scene->field.pos.y + 80.f);
 
 		// Botが移動できる幅を制限
 		//target1_pos_y = ClampF(target1_pos_y, SCREEN_TOP + 50, SCREEN_BOTTOM - 50);
@@ -207,9 +207,9 @@ void GameController_RenderGuide(GameController* ctrl)
 // <<ネットワークコントローラー>> --------------------------------------
 
 // <コントローラー作成>
-GameController GameController_Network_Create(GameObject* object, GameObject* field, GameObject* ball, GameObject* enemy, BOOL server_flag, HNET handle)
+GameController GameController_Network_Create(GameObject* object, GameScene* scene, GameObject* enemy, BOOL server_flag, HNET handle)
 {
-	GameController ctrl = GameController_Create(object, GameController_Network_Update, GameController_Network_UpdateControl, field, ball, enemy);
+	GameController ctrl = GameController_Create(object, GameController_Network_Update, GameController_Network_UpdateControl, scene, enemy);
 	ctrl.network_server_flag = server_flag;
 	ctrl.network_handle = handle;
 	return ctrl;
@@ -257,11 +257,11 @@ void GameController_Network_Update(GameController* ctrl)
 
 		// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
 		{
-			float center = ctrl->field->pos.x;
+			float center = ctrl->scene->field.pos.x;
 			if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
 				(yourpacket.ball.pos.x < center && paddle.pos.x < center))
 			{
-				*ctrl->ball = yourpacket.ball;
+				ctrl->scene->ball = yourpacket.ball;
 			}
 		}
 
@@ -274,7 +274,7 @@ void GameController_Network_Update(GameController* ctrl)
 	{
 		// 送信パケット
 		NetworkPacket mypacket = {
-			*ctrl->ball,
+			ctrl->scene->ball,
 			*ctrl->enemy,
 			*ctrl->object
 		};
