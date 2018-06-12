@@ -198,6 +198,7 @@ GameController GameController_Network_Create(GameObject* object, GameObject* fie
 	return ctrl;
 }
 
+// パケットの定義
 typedef struct
 {
 	GameObject ball;
@@ -208,6 +209,7 @@ typedef struct
 // 通信相手がパドルとボールを操作
 void GameController_Network_Update(GameController* ctrl)
 {
+	// フレームカウンタ
 	static int frame = 0;
 	frame++;
 
@@ -215,32 +217,45 @@ void GameController_Network_Update(GameController* ctrl)
 	if (GetLostNetWork() == ctrl->network_handle)
 		ctrl->UpdateControl = GameController_Bot_Update;
 
+	// パケットが届いていたら
 	if (GetNetWorkDataLength(ctrl->network_handle) != 0)
 	{
+		// 受信パケット
 		NetworkPacket yourpacket;
 		NetWorkRecv(ctrl->network_handle, &yourpacket, sizeof(NetworkPacket));
 
-		float center = ctrl->field->pos.x;
+		// 通信相手が操作するパドルを取得
 		GameObject paddle;
 		{
+			// 自分の情報の中での位置関係
 			BOOL b1 = (ctrl->enemy->pos.x < ctrl->object->pos.x);
+			// 相手の情報の中での位置関係
 			BOOL b2 = (yourpacket.paddle1.pos.x < yourpacket.paddle2.pos.x);
+			// 位置関係が一致しているパドルを選択
 			if ((b1 && b2) || (!b1 && !b2))
 				paddle = yourpacket.paddle2;
 			else
 				paddle = yourpacket.paddle1;
 		}
 
-		if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
-			(yourpacket.ball.pos.x < center && paddle.pos.x < center))
+		// 半分より遠い位置にボールがある場合、相手のパケットのボール情報を取得
 		{
-			*ctrl->ball = yourpacket.ball;
+			float center = ctrl->field->pos.x;
+			if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
+				(yourpacket.ball.pos.x < center && paddle.pos.x < center))
+			{
+				*ctrl->ball = yourpacket.ball;
+			}
 		}
+
+		// 相手のパケットのパドル情報を取得
 		*ctrl->object = paddle;
 	}
 
+	// 3フレームに1回パケットを送信
 	if (frame % 3 == 0)
 	{
+		// 送信パケット
 		NetworkPacket mypacket = {
 			*ctrl->ball,
 			*ctrl->enemy,
