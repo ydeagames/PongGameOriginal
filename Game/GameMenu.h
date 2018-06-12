@@ -22,5 +22,8 @@ GameMenu GameMenu_Create(GameObject* field);
 // <メニュー更新>
 void GameMenu_Update(GameMenu* menu);
 
+// <メニュー決定が押されたとき>
+BOOL GameMenu_OnPressed(GameMenu* menu);
+
 // <メニュー描画>
 void GameMenu_Render(GameMenu* menu, GameResource* res);

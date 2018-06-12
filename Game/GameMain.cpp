@@ -164,7 +164,7 @@ void UpdateGameSceneDemo(void)
 	// 待機&初期化
 	{
 		// 入力されたら
-		if (IsButtonDown(PAD_INPUT_10))
+		if (IsButtonDown(PAD_INPUT_10)&&GameMenu_OnPressed(&g_menu))
 		{
 			// 点数リセット
 			GameScore_Clear(&g_score);
