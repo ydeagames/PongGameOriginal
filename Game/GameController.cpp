@@ -215,33 +215,36 @@ void GameController_Network_Update(GameController* ctrl)
 	if (GetLostNetWork() == ctrl->network_handle)
 		ctrl->UpdateControl = GameController_Bot_Update;
 
-	if (frame % 60 == 0)
+	if (GetNetWorkDataLength(ctrl->network_handle) != 0)
 	{
 		NetworkPacket yourpacket;
 		NetWorkRecv(ctrl->network_handle, &yourpacket, sizeof(NetworkPacket));
 
 		float center = ctrl->field->pos.x;
-		GameObject paddle_enemy;
+		GameObject paddle;
 		{
 			BOOL b1 = (ctrl->enemy->pos.x < ctrl->object->pos.x);
 			BOOL b2 = (yourpacket.paddle1.pos.x < yourpacket.paddle2.pos.x);
-			if (b1 ^ b2)
-				paddle_enemy = yourpacket.paddle1;
+			if ((b1 && b2) || (!b1 && !b2))
+				paddle = yourpacket.paddle2;
 			else
-				paddle_enemy = yourpacket.paddle2;
+				paddle = yourpacket.paddle1;
 		}
 
-		if ((center < yourpacket.ball.pos.x && paddle_enemy.pos.x < center) ||
-			(yourpacket.ball.pos.x < center && center < paddle_enemy.pos.x))
+		if ((center < yourpacket.ball.pos.x && center < paddle.pos.x) ||
+			(yourpacket.ball.pos.x < center && paddle.pos.x < center))
 		{
 			*ctrl->ball = yourpacket.ball;
 		}
-		*ctrl->enemy = paddle_enemy;
+		*ctrl->object = paddle;
+	}
 
+	if (frame % 3 == 0)
+	{
 		NetworkPacket mypacket = {
 			*ctrl->ball,
-			*ctrl->object,
-			*ctrl->enemy
+			*ctrl->enemy,
+			*ctrl->object
 		};
 		NetWorkSend(ctrl->network_handle, &mypacket, sizeof(NetworkPacket));
 	}
