@@ -159,11 +159,20 @@ void GameMenu_Render(GameMenu* menu)
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 
-	DrawFormatStringToHandle(
-		(int)(menu->scene->field.pos.x - GetDrawFormatStringWidthToHandle(menu->resources->font_pong, GAME_TITLE) / 2),
-		(int)(GameObject_GetY(&inner, TOP, -20)),
-		COLOR_BLACK, menu->resources->font_pong, GAME_TITLE
-	);
+	{
+		int width_pong = GetDrawFormatStringWidthToHandle(menu->resources->font_pong, GAME_TITLE);
+		int width_c = GetDrawFormatStringWidthToHandle(menu->resources->font_note, "(c) 2018 YdeaGames");
+		DrawFormatStringToHandle(
+			(int)(menu->scene->field.pos.x - width_pong / 2),
+			(int)(GameObject_GetY(&inner, TOP, -20)),
+			COLOR_BLACK, menu->resources->font_pong, GAME_TITLE
+		);
+		DrawFormatStringToHandle(
+			(int)(menu->scene->field.pos.x + width_pong / 2 - width_c),
+			(int)(GameObject_GetY(&inner, TOP, -20)) + FONT_SIZE_PONG - 10,
+			COLOR_BLACK, menu->resources->font_note, "(c) 2018 YdeaGames"
+		);
+	}
 
 	{
 		IPDATA ip;
@@ -192,7 +201,8 @@ void GameMenu_Render(GameMenu* menu)
 		}
 	}
 
-	DrawFormatStringToHandle((int)GameObject_GetX(&menu->scene->field, LEFT, -10), (int)GameObject_GetY(&menu->scene->field, BOTTOM, -40), COLOR_WHITE, menu->resources->font_note,
+	DrawFormatStringToHandle((int)GameObject_GetX(&menu->scene->field, LEFT, -10), (int)GameObject_GetY(&menu->scene->field, BOTTOM, -50), COLOR_WHITE, menu->resources->font_note,
+		"※ ↑↓キー: メニュー選択、パドル操作　　スペースキー: メニュー決定\n"
 		"※ 設定「ローカルのアドレスにはプロキシサーバーを使わない」にチェックを付けて下さい\n"
 		"※ ファイアウォールの画面が出ましたら、「アクセスを許可する」を選択して下さい\n");
 }
