@@ -232,7 +232,7 @@ void GameMenu_Render(GameMenu* menu)
 	}
 
 	DrawFormatStringToHandle((int)GameObject_GetX(&menu->scene->field, LEFT, -10), (int)GameObject_GetY(&menu->scene->field, BOTTOM, -50), COLOR_WHITE, menu->resources->font_note,
-		"※ ↑↓キー: メニュー選択、パドル操作　　スペースキー: メニュー決定\n"
+		"※ メニュー選択、パドル操作: ↑↓キー　　メニュー決定: スペースキー\n"
 		"※ 設定「ローカルのアドレスにはプロキシサーバーを使わない」にチェックを付けて下さい\n"
 		"※ ファイアウォールの画面が出ましたら、「アクセスを許可する」を選択して下さい\n");
 
