@@ -1,4 +1,5 @@
 #include "GameController.h"
+#include "GameObjects.h"
 
 // 関数の宣言 ==============================================================
 
@@ -206,7 +207,8 @@ void GameController_RenderGuide(GameController* ctrl)
 {
 	GameObject target = *ctrl->object;
 	target.pos = ctrl->target_pos;
-	GameObject_Render(&target, 0x222222);
+	target.sprite.color = 0x222222;
+	GameObject_Render(&target);
 }
 
 // <<ネットワークコントローラー>> --------------------------------------
@@ -291,8 +293,8 @@ void GameController_Network_Update(GameController* ctrl)
 				GameObject_Ball_SetPosXDefault(&ctrl->scene->ball, &ctrl->scene->field);
 
 				// パドルを初期位置へ
-				GameObject_Paddle_SetPosYDefault(&ctrl->scene->paddle1);
-				GameObject_Paddle_SetPosYDefault(&ctrl->scene->paddle2);
+				GameObject_Paddle_SetPosYDefault(&ctrl->scene->paddle1, &ctrl->scene->field);
+				GameObject_Paddle_SetPosYDefault(&ctrl->scene->paddle2, &ctrl->scene->field);
 			}
 			if (yourpacket.packet == PACKET_START || yourpacket.packet == PACKET_END)
 				ctrl->scene->game_state = yourpacket.game_state;

@@ -11,6 +11,7 @@
 // ヘッダファイルの読み込み ================================================
 #include "GameMain.h"
 #include "GameObject.h"
+#include "GameObjects.h"
 #include "GameControllers.h"
 #include "GameScore.h"
 #include "GameResource.h"
@@ -82,14 +83,14 @@ void InitializeGame(void)
 
 	// パドル1
 	g_scene.paddle1 = GameObject_Paddle_Create();
-	GameObject_SetX(&g_scene.paddle1, RIGHT, SCREEN_LEFT, 64);
-	GameObject_Paddle_SetPosYDefault(&g_scene.paddle1);
+	g_scene.paddle1.pos.x = GameObject_OffsetX(&g_scene.paddle1, LEFT, GameObject_GetX(&g_scene.field, LEFT), -64);
+	GameObject_Paddle_SetPosYDefault(&g_scene.paddle1, &g_scene.field);
 	g_controllers.paddle1 = GameController_Bot_Create(&g_scene.paddle1, &g_scene, &g_scene.paddle2);
 
 	// パドル2
 	g_scene.paddle2 = GameObject_Paddle_Create();
-	GameObject_SetX(&g_scene.paddle2, LEFT, SCREEN_RIGHT, 64);
-	GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
+	g_scene.paddle2.pos.x = GameObject_OffsetX(&g_scene.paddle2, RIGHT, GameObject_GetX(&g_scene.field, RIGHT), -64);
+	GameObject_Paddle_SetPosYDefault(&g_scene.paddle2, &g_scene.field);
 	g_controllers.paddle2 = GameController_Player_Create(&g_scene.paddle2, &g_scene, &g_scene.paddle1, PAD_INPUT_UP, PAD_INPUT_DOWN);
 	//g_controllers.paddle2 = GameController_Bot_Create(&g_scene.paddle2, &g_scene, &g_scene.paddle1);
 
@@ -116,6 +117,8 @@ void InitializeGame(void)
 //----------------------------------------------------------------------
 void UpdateGame(void)
 {
+	GameTick_Update();
+
 	switch (g_scene.game_state)
 	{
 	case STATE_DEMO:
@@ -145,8 +148,8 @@ void UpdateGameSceneDemo(void)
 			GameObject_Ball_SetPosXDefault(&g_scene.ball, &g_scene.field);
 
 			// パドルを初期位置へ
-			GameObject_Paddle_SetPosYDefault(&g_scene.paddle1);
-			GameObject_Paddle_SetPosYDefault(&g_scene.paddle2);
+			GameObject_Paddle_SetPosYDefault(&g_scene.paddle1, &g_scene.field);
+			GameObject_Paddle_SetPosYDefault(&g_scene.paddle2, &g_scene.field);
 
 			// シーンをプレイに変更
 			g_scene.game_state = STATE_PLAY;
@@ -162,8 +165,10 @@ void UpdateGameSceneDemo(void)
 	GameObject_UpdatePosition(&g_scene.ball);
 
 	// 当たり判定
-	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE);
-	GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, TRUE);
+	if (GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, CONNECTION_BARRIER, EDGESIDE_INNER))
+		g_scene.ball.vel.y *= -1;
+	if (GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, CONNECTION_BARRIER, EDGESIDE_INNER))
+		g_scene.ball.vel.x *= -1;
 
 	// メニュー更新
 	GameMenu_Update(&g_menu);
@@ -202,11 +207,12 @@ void UpdateGameSceneServe(void)
 	GameObject_UpdatePosition(&g_scene.paddle2);
 
 	// 当たり判定
-	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE);
+	if (GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, CONNECTION_BARRIER, EDGESIDE_INNER))
+		g_scene.ball.vel.y *= -1;
 	GameObject_Paddle_CollisionBall(&g_scene.paddle1, &g_scene.ball);
 	GameObject_Paddle_CollisionBall(&g_scene.paddle2, &g_scene.ball);
-	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, FALSE);
-	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, FALSE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, CONNECTION_BARRIER, EDGESIDE_INNER);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, CONNECTION_BARRIER, EDGESIDE_INNER);
 }
 
 // <ゲームの更新処理:シーン:プレイ> ------------------------------------
@@ -226,10 +232,13 @@ void UpdateGameScenePlay(void)
 	GameObject_UpdatePosition(&g_scene.paddle2);
 
 	// 当たり判定
-	if (GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, TRUE))
-		PlaySoundMem(g_resources.sound_se02, DX_PLAYTYPE_BACK);
+	if (GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.ball, CONNECTION_BARRIER, EDGESIDE_INNER))
 	{
-		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, FALSE);
+		g_scene.ball.vel.y *= -1;
+		PlaySoundMem(g_resources.sound_se02, DX_PLAYTYPE_BACK);
+	}
+	{
+		ObjectSide side = GameObject_Field_CollisionHorizontal(&g_scene.field, &g_scene.ball, CONNECTION_NONE, EDGESIDE_OUTER);
 		if (side)
 		{
 			UpdateGameScore(side);
@@ -238,8 +247,8 @@ void UpdateGameScenePlay(void)
 	}
 	if (GameObject_Paddle_CollisionBall(&g_scene.paddle1, &g_scene.ball) || GameObject_Paddle_CollisionBall(&g_scene.paddle2, &g_scene.ball))
 		PlaySoundMem(g_resources.sound_se01, DX_PLAYTYPE_BACK);
-	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, FALSE);
-	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, FALSE);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle1, CONNECTION_BARRIER, EDGESIDE_INNER);
+	GameObject_Field_CollisionVertical(&g_scene.field, &g_scene.paddle2, CONNECTION_BARRIER, EDGESIDE_INNER);
 }
 
 // <ゲームの更新処理:スコア加算>
@@ -296,7 +305,7 @@ void RenderGameSceneDemo(void)
 	// フィールド描画
 	GameObject_Field_Render(&g_scene.field);
 	// ボール描画
-	GameObject_Render(&g_scene.ball, COLOR_WHITE);
+	GameObject_Render(&g_scene.ball);
 	// メニュー描画
 	GameMenu_Render(&g_menu);
 	// スコア描画
@@ -312,10 +321,10 @@ void RenderGameSceneServe(void)
 	// スコア描画
 	GameScore_Render(&g_scene.score, &g_scene.field, g_resources.font_pong);
 	// パドル描画
-	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
-	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
+	GameObject_Render(&g_scene.paddle1);
+	GameObject_Render(&g_scene.paddle2);
 	// ボール描画
-	GameObject_Render(&g_scene.ball, COLOR_WHITE);
+	GameObject_Render(&g_scene.ball);
 }
 
 // <ゲームの描画処理:シーン:プレイ> -------------------------------------------
@@ -332,10 +341,10 @@ void RenderGameScenePlay(void)
 	if (g_scene.score.score1 - g_scene.score.score2 >= SCORE_TO_GUID)
 		GameController_RenderGuide(&g_controllers.paddle2);
 	// パドル描画
-	GameObject_Render(&g_scene.paddle1, COLOR_WHITE);
-	GameObject_Render(&g_scene.paddle2, COLOR_WHITE);
+	GameObject_Render(&g_scene.paddle1);
+	GameObject_Render(&g_scene.paddle2);
 	// ボール描画
-	GameObject_Render(&g_scene.ball, COLOR_WHITE);
+	GameObject_Render(&g_scene.ball);
 }
 
 //----------------------------------------------------------------------

@@ -1,39 +1,156 @@
 #include "GameObject.h"
+#include "GameUtils.h"
 #include "GameMain.h"
+#include <math.h>
 
 // 定数の定義 ==============================================================
 
-// <ボール>
-#define BALL_SIZE 8
+// <デバッグ用当たり判定表示>
+#define DEBUG_HITBOX FALSE
 
-// <パドル>
-#define PADDLE_WIDTH  8
-#define PADDLE_HEIGHT 28
+// 変数の定義 ==============================================================
+
+// <<ティック>> --------------------------------------------------------
+
+// <最終時刻>
+static int g_lastcount = -1;
+// <デルタミリ秒>
+static int g_deltamilliseconds = 0;
 
 // 関数の宣言 ==============================================================
 
-float GameObject_Paddle_GetBallVelX(GameObject* paddle, GameObject* ball);
-float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball);
+static BOOL GameObject_IsHitOvalPoint(GameObject* oval, Vec2* p);
+static BOOL GameObject_IsHitOval(GameObject* obj1, GameObject* obj2);
+static BOOL GameObject_IsHitCirclePoint(GameObject* oval, Vec2* p);
+static BOOL GameObject_IsHitCircle(GameObject* obj1, GameObject* obj2);
+static BOOL GameObject_IsHitBox(GameObject* obj1, GameObject* obj2);
 
 // 関数の定義 ==============================================================
+
+// <<テクスチャ>> ------------------------------------------------------
+
+// <テクスチャ作成>
+GameTexture GameTexture_Create(HGRP texture, Vec2 anchor, Vec2 size)
+{
+	return{ texture, anchor, size, Vec2_Create(size.x / 2, size.y / 2) };
+}
+
+// <テクスチャなし>
+GameTexture GameTexture_CreateNone()
+{
+	return GameTexture_Create(TEXTURE_NONE, Vec2_Create(), Vec2_Create());
+}
+
+// <<スプライトアニメーション>> ----------------------------------------
+
+// <スプライトアニメーション作成>
+GameSpriteAnimation GameSpriteAnimation_Create(int frames_start, int frames_end, int num_columns, int frame_duration)
+{
+	return{ frames_start, frames_end, num_columns, frame_duration, frames_start, 0 };
+}
+
+// <スプライトアニメーションなし>
+GameSpriteAnimation GameSpriteAnimation_CreateNone()
+{
+	return GameSpriteAnimation_Create(0, 0, 1, 1);
+}
+
+// <スプライトアニメーション更新>
+AnimationState GameSpriteAnimation_Update(GameSpriteAnimation* animate_sprite)
+{
+	AnimationState result = ANIMATION_FINISHED;
+
+	animate_sprite->elapsed_time++;
+
+	if (animate_sprite->elapsed_time > animate_sprite->frame_duration)
+	{
+		animate_sprite->elapsed_time = 0;
+		animate_sprite->frame_index++;
+
+		if (animate_sprite->frame_index > animate_sprite->frame_end)
+		{
+			animate_sprite->frame_index = animate_sprite->frame_start;
+			result = ANIMATION_RUNNING;
+		}
+	}
+
+	return result;
+}
+
+// <<スプライト>> ------------------------------------------------------
+
+// <スプライト作成>
+GameSprite GameSprite_Create(GameTexture texture, float scale, float angle)
+{
+	return{ COLOR_WHITE, texture, Vec2_Create(), scale, angle, GameSpriteAnimation_CreateNone() };
+}
+
+// <スプライトなし>
+GameSprite GameSprite_CreateNone()
+{
+	return GameSprite_Create(GameTexture_CreateNone(), 0, 0);
+}
+
+// <スプライト描画>
+void GameSprite_Render(const GameSprite* sprite, const Vec2* pos)
+{
+	int column = sprite->animation.frame_index%sprite->animation.num_columns;
+	int row = sprite->animation.frame_index%sprite->animation.num_columns;
+
+	Vec2 anchor = Vec2_Add(&sprite->texture.anchor, &Vec2_Create(sprite->texture.size.x * column, sprite->texture.size.y * row));
+
+	// スプライト描画
+	DrawRectRotaGraph2F(
+		pos->x + sprite->offset.x, pos->y + sprite->offset.y,
+		(int)anchor.x, (int)anchor.y,
+		(int)sprite->texture.size.x, (int)sprite->texture.size.y,
+		sprite->texture.center.x, sprite->texture.center.y,
+		(double)sprite->scale,
+		(double)sprite->angle,
+		sprite->texture.texture,
+		TRUE
+	);
+}
+
+// <<ティック>> --------------------------------------------------------
+
+// <オブジェクト作成>
+void GameTick_Update(void)
+{
+	int now = GetNowCount();
+	g_deltamilliseconds = GetMin(100, now - g_lastcount);
+	g_lastcount = now;
+}
 
 // <<オブジェクト>> ----------------------------------------------------
 
 // <オブジェクト作成>
 GameObject GameObject_Create(Vec2 pos, Vec2 vel, Vec2 size)
 {
-	return { pos, vel, size };
+	return{ pos, vel, size, SHAPE_BOX, GameSprite_CreateNone(), CONNECTION_NONE, TRUE, 1, 0, GameTimer_Create() };
+}
+
+// <オブジェクト削除>
+void GameObject_Dispose(GameObject* obj)
+{
+	obj->alive = FALSE;
+}
+
+// <オブジェクト確認>
+BOOL GameObject_IsAlive(const GameObject* obj)
+{
+	return obj->alive;
 }
 
 // <オブジェクト座標更新>
 void GameObject_UpdatePosition(GameObject* obj)
 {
-	obj->pos.x += obj->vel.x;
-	obj->pos.y += obj->vel.y;
+	obj->pos.x += obj->vel.x * (g_deltamilliseconds / 17.f);
+	obj->pos.y += obj->vel.y * (g_deltamilliseconds / 17.f);
 }
 
 // <オブジェクトXオフセット>
-float GameObject_OffsetX(GameObject* obj, ObjectSide side, float pos, float padding)
+float GameObject_OffsetX(const GameObject* obj, ObjectSide side, float pos, float padding)
 {
 	float offset = 0;
 	switch (side)
@@ -49,7 +166,7 @@ float GameObject_OffsetX(GameObject* obj, ObjectSide side, float pos, float padd
 }
 
 // <オブジェクトXオフセット>
-float GameObject_OffsetY(GameObject* obj, ObjectSide side, float pos, float padding)
+float GameObject_OffsetY(const GameObject* obj, ObjectSide side, float pos, float padding)
 {
 	float offset = 0;
 	switch (side)
@@ -64,32 +181,20 @@ float GameObject_OffsetY(GameObject* obj, ObjectSide side, float pos, float padd
 	return pos + offset;
 }
 
-// <オブジェクトX位置セット>
-void GameObject_SetX(GameObject* obj, ObjectSide side, float pos, float padding)
-{
-	obj->pos.x = GameObject_OffsetX(obj, side, pos, padding);
-}
-
-// <オブジェクトY位置セット>
-void GameObject_SetY(GameObject* obj, ObjectSide side, float pos, float padding)
-{
-	obj->pos.y = GameObject_OffsetY(obj, side, pos, padding);
-}
-
 // <オブジェクトX位置ゲット>
-float GameObject_GetX(GameObject* obj, ObjectSide side, float padding)
+float GameObject_GetX(const GameObject* obj, ObjectSide side, float padding)
 {
 	return GameObject_OffsetX(obj, side, obj->pos.x, padding);
 }
 
 // <オブジェクトY位置ゲット>
-float GameObject_GetY(GameObject* obj, ObjectSide side, float padding)
+float GameObject_GetY(const GameObject* obj, ObjectSide side, float padding)
 {
 	return GameObject_OffsetY(obj, side, obj->pos.y, padding);
 }
 
-// <オブジェクト当たり判定>
-BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2)
+// <矩形オブジェクト×矩形オブジェクト当たり判定>
+static BOOL GameObject_IsHitBox(const GameObject* obj1, const GameObject* obj2)
 {
 	return (
 		GameObject_GetX(obj2, LEFT) < GameObject_GetX(obj1, RIGHT) &&
@@ -99,179 +204,340 @@ BOOL GameObject_IsHit(GameObject* obj1, GameObject* obj2)
 		);
 }
 
-// <オブジェクト描画>
-void GameObject_Render(GameObject* obj, unsigned int color)
+// <楕円オブジェクト×楕円オブジェクト当たり判定> // ※未使用
+static BOOL GameObject_IsHitOval(const GameObject* obj1, const GameObject* obj2)
 {
-	DrawBoxAA(GameObject_GetX(obj, LEFT), GameObject_GetY(obj, TOP), GameObject_GetX(obj, RIGHT), GameObject_GetY(obj, BOTTOM), color, TRUE);
+	// STEP1 : obj2を単位円にする変換をobj1に施す
+	float nx = obj1->size.x / 2;
+	float ny = obj1->size.y / 2;
+	float px = obj2->size.x / 2;
+	float py = obj2->size.y / 2;
+	float ox = (obj2->pos.x - obj1->pos.x);
+	float oy = (obj2->pos.y - obj1->pos.y);
+
+	// STEP2 : 一般式の算出
+	float rx_pow2 = 1 / (nx*nx);
+	float ry_pow2 = 1 / (ny*ny);
+	float ax = rx_pow2 * px*px;
+	float ay = ry_pow2 * py*py;
+	float bx = 2 * rx_pow2*px*ox;
+	float by = 2 * ry_pow2*py*oy;
+	float g = ox * ox*rx_pow2 + oy * oy*ry_pow2 - 1;
+
+	// STEP3 : 平行移動量の算出
+	float tr_x = bx / (2 * ax);
+	float tr_y = by / (2 * ay);
+
+	// STEP4 : +1楕円を元に戻した式で当たり判定
+	float kk = GetMinF(ax * tr_x*tr_x + ay * tr_y*tr_y - bx * tr_x - by * tr_y + g, 0);
+	float ex = 1 + sqrtf(-kk / ax);
+	float ey = 1 + sqrtf(-kk / ay);
+	float JudgeValue = tr_x * tr_x / (ex*ex) + tr_y * tr_y / (ey*ey);
+
+	return (JudgeValue <= 1);
 }
 
-// <<ボールオブジェクト>> ----------------------------------------------
-
-// <ボールオブジェクト作成>
-GameObject GameObject_Ball_Create(void)
+// <楕円オブジェクト×点当たり判定> // ※未使用
+static BOOL GameObject_IsHitOvalPoint(const GameObject* oval, const Vec2* p)
 {
-	return GameObject_Create(Vec2_Create(), Vec2_Create(), Vec2_Create(BALL_SIZE, BALL_SIZE));
+	// 点に楕円→真円変換行列を適用
+	float tx = p->x - oval->pos.x;
+	float ty = p->y - oval->pos.y;
+	float rx = oval->size.x / 2;
+	float ry = oval->size.y / 2;
+
+	// 原点から移動後点までの距離を算出
+	return  (tx * tx + ty * ty * (rx / ry) * (rx / ry) <= rx * rx);
 }
 
-// <ボールオブジェクト座標Xデフォルト>
-void GameObject_Ball_SetPosXDefault(GameObject* obj, GameObject* field)
+// <円オブジェクト×円オブジェクト当たり判定>
+static BOOL GameObject_IsHitCircle(const GameObject* obj1, const GameObject* obj2)
 {
-	obj->pos.x = field->pos.x;
+	float r1 = GetMinF(obj1->size.x, obj1->size.y) / 2;
+	float r2 = GetMinF(obj2->size.x, obj2->size.y) / 2;
+
+	return Vec2_LengthSquaredTo(&obj1->pos, &obj2->pos) < (r1 + r2)*(r1 + r2);
 }
 
-// <ボールオブジェクト座標Yデフォルト>
-void GameObject_Ball_SetPosYDefault(GameObject* obj, GameObject* field)
+// <円オブジェクト×点当たり判定>
+static BOOL GameObject_IsHitCirclePoint(const GameObject* circle, const Vec2* p)
 {
-	obj->pos.y = field->pos.y;
+	float r1 = GetMinF(circle->size.x, circle->size.y) / 2;
+
+	return Vec2_LengthSquaredTo(&circle->pos, p) < r1*r1;
 }
 
-// <ボールオブジェクト移動Xデフォルト>
-void GameObject_Ball_SetVelXDefault(GameObject* obj)
+// <オブジェクト当たり判定>
+BOOL GameObject_IsHit(const GameObject* obj1, const GameObject* obj2)
 {
-	obj->vel.x = BALL_VEL_X_MIN;
-}
-
-// <ボールオブジェクト移動Yデフォルト>
-void GameObject_Ball_SetVelYDefault(GameObject* obj)
-{
-	obj->vel.y = -BALL_VEL_Y;
-}
-
-// <<パドルオブジェクト>> ----------------------------------------------
-
-// <パドルオブジェクト作成>
-GameObject GameObject_Paddle_Create(void)
-{
-	return GameObject_Create(Vec2_Create(), Vec2_Create(), Vec2_Create(PADDLE_WIDTH, PADDLE_HEIGHT));
-}
-
-// <パドルオブジェクト座標Yデフォルト>
-void GameObject_Paddle_SetPosYDefault(GameObject* obj)
-{
-	GameObject_SetY(obj, TOP, SCREEN_BOTTOM, 16);
-}
-
-// <パドルオブジェクトボール衝突処理>
-BOOL GameObject_Paddle_CollisionBall(GameObject* paddle, GameObject* ball)
-{
-	if (GameObject_IsHit(ball, paddle))
+	if (obj1->shape == SHAPE_BOX && obj2->shape == SHAPE_BOX)
+		return GameObject_IsHitBox(obj1, obj2);
+	else if (obj1->shape == SHAPE_CIRCLE && obj2->shape == SHAPE_CIRCLE)
+		return GameObject_IsHitBox(obj1, obj2) && GameObject_IsHitCircle(obj1, obj2);
+	else
 	{
-		ball->vel.x *= -1;
-		ball->vel.x = GameObject_Paddle_GetBallVelX(paddle, ball);
+		if (GameObject_IsHitBox(obj1, obj2))
+		{
+			if (obj1->shape == SHAPE_CIRCLE)
+			{
+				const GameObject* tmp = obj1;
+				obj1 = obj2;
+				obj2 = tmp;
+			}
+			if (GameObject_GetX(obj1, LEFT) <= obj2->pos.x && obj2->pos.x <= GameObject_GetX(obj1, RIGHT))
+				return obj1->size.y / 2 + obj2->size.y / 2 > GetAbsF(obj2->pos.y - obj1->pos.y);
+			else if (GameObject_GetY(obj1, TOP) <= obj2->pos.y && obj2->pos.y <= GameObject_GetY(obj1, BOTTOM))
+				return obj1->size.x / 2 + obj2->size.x / 2 > GetAbsF(obj2->pos.x - obj1->pos.x);
+			else
+			{
+				return (
+					GameObject_IsHitCirclePoint(obj2, &Vec2_Create(GameObject_GetX(obj1, LEFT), GameObject_GetY(obj1, TOP))) ||
+					GameObject_IsHitCirclePoint(obj2, &Vec2_Create(GameObject_GetX(obj1, RIGHT), GameObject_GetY(obj1, TOP))) ||
+					GameObject_IsHitCirclePoint(obj2, &Vec2_Create(GameObject_GetX(obj1, LEFT), GameObject_GetY(obj1, BOTTOM))) ||
+					GameObject_IsHitCirclePoint(obj2, &Vec2_Create(GameObject_GetX(obj1, RIGHT), GameObject_GetY(obj1, BOTTOM)))
+					);
+			}
+		}
 
-		ball->vel.y = GameObject_Paddle_GetBallVelY(paddle, ball);
-
-		if (ball->vel.x < 0)
-			ball->pos.x = GameObject_OffsetX(ball, LEFT, GameObject_GetX(paddle, LEFT));
-		else
-			ball->pos.x = GameObject_OffsetX(ball, RIGHT, GameObject_GetX(paddle, RIGHT));
-
-		return TRUE;
+		return FALSE;
 	}
-
-	return FALSE;
 }
 
-// <パドルの速度からボールX速度を求める>
-float GameObject_Paddle_GetBallVelX(GameObject* paddle, GameObject* ball)
+// <オブジェクト描画>
+void GameObject_Render(const GameObject* obj, const Vec2* translate)
 {
-	float ball_vel_diff_x, ball_vel_new_x;
+	float box_xl = GameObject_GetX(obj, LEFT) + translate->x;
+	float box_xc = GameObject_GetX(obj, CENTER_X) + translate->x;
+	float box_xr = GameObject_GetX(obj, RIGHT) + translate->x;
+	float box_yt = GameObject_GetY(obj, TOP) + translate->y;
+	float box_ym = GameObject_GetY(obj, CENTER_Y) + translate->y;
+	float box_yb = GameObject_GetY(obj, BOTTOM) + translate->y;
+	Vec2 box_t = Vec2_Create(box_xc, box_ym);
 
-	ball_vel_diff_x = paddle->vel.y / PADDLE_VEL * (BALL_VEL_X_MAX - BALL_VEL_X_MIN);
-	if (ball_vel_diff_x < 0)
-		ball_vel_diff_x *= -1;
-	ball_vel_new_x = ball_vel_diff_x + BALL_VEL_X_MIN;
-	if (ball->vel.x < 0)
-		ball_vel_new_x *= -1;
+	// テクスチャを確認
+	if (obj->sprite.texture.texture == TEXTURE_NONE)
+	{
+		switch (obj->shape)
+		{
+		default:
+		case SHAPE_BOX:
+			// 矩形描画
+			if (DEBUG_HITBOX)
+				DrawBoxAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, FALSE, .5f);
+			else
+				DrawBoxAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, TRUE);
+			break;
+		case SHAPE_CIRCLE:
+		{
+			float r1 = GetMinF(obj->size.x, obj->size.y) / 2;
+			// 円
+			if (DEBUG_HITBOX)
+			{
+				DrawCircleAA(box_xc, box_ym, r1, 120, obj->sprite.color, FALSE, .5f);
+				DrawBoxAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, FALSE, .5f);
+			}
+			else
+				DrawCircleAA(box_xc, box_ym, r1, 120, obj->sprite.color, TRUE);
+			break;
+		}
+		}
+	}
+	else
+	{
+		if (obj->sprite.texture.texture != TEXTURE_MISSING)
+		{
+			switch (obj->sprite_connection)
+			{
+			case CONNECTION_LOOP:
+			case CONNECTION_BARRIER:
+			{
+				// リピートタイル (回転、テクスチャ中心座標 には未対応)
+				Vec2 center_offset = Vec2_Scale(&obj->sprite.texture.center, obj->sprite.scale);
+				Vec2 sp_pos = Vec2_Add(&box_t, &obj->sprite.offset);
+				Vec2 sp_size = Vec2_Scale(&obj->sprite.texture.size, obj->sprite.scale);
 
-	return ball_vel_new_x;
-}
+				float go_left = box_xl;
+				float go_right = box_xr;
+				float go_top = box_yt;
+				float go_bottom = box_yb;
 
-// <パドルにあたった位置からボールY速度を求める>
-float GameObject_Paddle_GetBallVelY(GameObject* paddle, GameObject* ball)
-{
-	float range_top = GameObject_OffsetY(ball, BOTTOM, GameObject_GetY(paddle, TOP));
-	float range_bottom = GameObject_OffsetY(ball, TOP, GameObject_GetY(paddle, BOTTOM));
-	float range_height = range_bottom - range_top;
+				float sp_left = sp_pos.x - sp_size.x / 2;
+				float sp_right = sp_pos.x + sp_size.x / 2;
+				float sp_top = sp_pos.y - sp_size.y / 2;
+				float sp_bottom = sp_pos.y + sp_size.y / 2;
 
-	return ((((ball->pos.y - range_top) / range_height) * 2 - 1)*BALL_VEL_Y);
+				switch (obj->sprite_connection)
+				{
+				case CONNECTION_BARRIER:
+					if (sp_left < go_right && go_left < sp_right && sp_top < go_bottom && go_top < sp_bottom)
+						GameSprite_Render(&obj->sprite, &box_t);
+					break;
+				case CONNECTION_LOOP:
+					float offset_x = GetLoopRangeF(go_left, sp_left, sp_right) - sp_left;
+					float offset_y = GetLoopRangeF(go_top, sp_top, sp_bottom) - sp_top;
+
+					if (sp_size.x >= 1.f && sp_size.y >= 1.f)
+					{
+						for (float iy = go_top + sp_size.y / 2 - offset_y - center_offset.y; iy < go_bottom; iy += sp_size.y)
+						{
+							for (float ix = go_left + sp_size.x / 2 - offset_x - center_offset.x; ix < go_right; ix += sp_size.x)
+							{
+								GameSprite_Render(&obj->sprite, &Vec2_Create(ix + sp_size.x / 2 - obj->sprite.offset.x, iy + sp_size.y / 2 - obj->sprite.offset.y));
+
+								if (DEBUG_HITBOX)
+									DrawBoxAA(ix, iy, ix + sp_size.x, iy + sp_size.y, obj->sprite.color, FALSE, .5f);
+							}
+						}
+					}
+
+					if (DEBUG_HITBOX)
+						DrawBoxAA(sp_left, sp_top, sp_right, sp_bottom, obj->sprite.color, FALSE, .5f);
+
+					break;
+				}
+
+				break;
+			}
+			default:
+				GameSprite_Render(&obj->sprite, &box_t);
+				break;
+			}
+		}
+		else
+		{
+			// NULLテクスチャを表示
+			DrawBoxAA(box_xl, box_yt, box_xr, box_yb, COLOR_BLACK, TRUE);
+			DrawBoxAA(box_xl, box_yt, box_xc, box_ym, COLOR_FUCHSIA, TRUE);
+			DrawBoxAA(box_xc, box_ym, box_xr, box_yb, COLOR_FUCHSIA, TRUE);
+			//DrawBoxAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, FALSE, .5f);
+		}
+
+		// デバッグ当たり判定枠を表示
+		if (DEBUG_HITBOX)
+		{
+			switch (obj->shape)
+			{
+			default:
+			case SHAPE_BOX:
+				DrawBoxAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, FALSE, .5f);
+				DrawLineAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, .5f);
+				DrawLineAA(box_xr, box_yt, box_xl, box_yb, obj->sprite.color, .5f);
+				break;
+			case SHAPE_CIRCLE:
+			{
+				float r1 = GetMinF(obj->size.x, obj->size.y) / 2;
+				DrawCircleAA(box_xc, box_ym, r1, 120, obj->sprite.color, FALSE, .5f);
+				DrawBoxAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, FALSE, .5f);
+				DrawLineAA(box_xl, box_yt, box_xr, box_yb, obj->sprite.color, .5f);
+				DrawLineAA(box_xr, box_yt, box_xl, box_yb, obj->sprite.color, .5f);
+				break;
+			}
+			}
+		}
+	}
 }
 
 // <<フィールドオブジェクト>> ------------------------------------------
 
-// <ボールオブジェクト作成>
+// <フィールドオブジェクト作成>
 GameObject GameObject_Field_Create(void)
 {
 	return GameObject_Create(Vec2_Create(SCREEN_CENTER_X, SCREEN_CENTER_Y), Vec2_Create(), Vec2_Create(SCREEN_WIDTH, SCREEN_HEIGHT));
 }
 
 // <フィールド上下衝突処理>
-ObjectSide GameObject_Field_CollisionVertical(GameObject* field, GameObject* obj, BOOL flag_with_bounce)
+ObjectSide GameObject_Field_CollisionVertical(const GameObject* field, GameObject* obj, ObjectConnection connection, ObjectEdgeSide edge)
 {
 	// ヒットサイド
 	ObjectSide side_hit = NONE;
 
-	// ボール・上下壁当たり判定
+	// コウラ・上下壁当たり判定
 	{
-		float padding_top = GameObject_OffsetY(obj, BOTTOM, GameObject_GetY(field, TOP));
-		float padding_bottom = GameObject_OffsetY(obj, TOP, GameObject_GetY(field, BOTTOM));
-
-		if (flag_with_bounce)
+		// 縁に応じてパディングを調整
+		float padding_top = GameObject_GetY(field, TOP);
+		float padding_bottom = GameObject_GetY(field, BOTTOM);
+		switch (edge)
 		{
-			if (obj->pos.y < padding_top || padding_bottom <= obj->pos.y)
-			{
-				obj->vel.y *= -1.f;
-			}
+		case EDGESIDE_INNER:
+			padding_top = GameObject_OffsetY(obj, BOTTOM, padding_top);
+			padding_bottom = GameObject_OffsetY(obj, TOP, padding_bottom);
+			break;
+		case EDGESIDE_OUTER:
+			padding_top = GameObject_OffsetY(obj, TOP, padding_top);
+			padding_bottom = GameObject_OffsetY(obj, BOTTOM, padding_bottom);
+			break;
 		}
 
+		// 当たり判定
 		if (obj->pos.y < padding_top)
 			side_hit = TOP;
 		else if (padding_bottom <= obj->pos.y)
 			side_hit = BOTTOM;
 
-		// 壁にめり込まないように調整
-		obj->pos.y = ClampF(obj->pos.y, padding_top, padding_bottom);
+		// フィールドのつながり
+		switch (connection)
+		{
+		case CONNECTION_BARRIER:
+			// 壁にあたったら調整
+			obj->pos.y = ClampF(obj->pos.y, padding_top, padding_bottom);
+			break;
+		case CONNECTION_LOOP:
+			// 壁にあたったらループ
+			obj->pos.y = GetLoopRangeF(obj->pos.y, padding_top, padding_bottom);
+			break;
+		}
 	}
 
 	return side_hit;
 }
 
 // <フィールド左右衝突処理>
-ObjectSide GameObject_Field_CollisionHorizontal(GameObject* field, GameObject* obj, BOOL flag_with_bounce)
+ObjectSide GameObject_Field_CollisionHorizontal(const GameObject* field, GameObject* obj, ObjectConnection connection, ObjectEdgeSide edge)
 {
 	// ヒットサイド
 	ObjectSide side_hit = NONE;
 
-	// ボール・左右壁当たり判定
+	// コウラ・左右壁当たり判定
 	{
-		float padding_left = GameObject_OffsetX(obj, RIGHT, GameObject_GetX(field, LEFT));
-		float padding_right = GameObject_OffsetX(obj, LEFT, GameObject_GetX(field, RIGHT));
-
-		if (flag_with_bounce)
+		// 縁に応じてパディングを調整
+		float padding_left = GameObject_GetX(field, LEFT);
+		float padding_right = GameObject_GetX(field, RIGHT);
+		switch (edge)
 		{
-			// 画面外に出たときの処理
-			if (obj->pos.x < padding_left || padding_right <= obj->pos.x)
-			{
-				obj->vel.x *= -1.f;
-			}
+		case EDGESIDE_INNER:
+			padding_left = GameObject_OffsetX(obj, RIGHT, padding_left);
+			padding_right = GameObject_OffsetX(obj, LEFT, padding_right);
+			break;
+		case EDGESIDE_OUTER:
+			padding_left = GameObject_OffsetX(obj, LEFT, padding_left);
+			padding_right = GameObject_OffsetX(obj, RIGHT, padding_right);
+			break;
 		}
 
+		// 当たり判定
 		if (obj->pos.x < padding_left)
 			side_hit = LEFT;
 		else if (padding_right <= obj->pos.x)
 			side_hit = RIGHT;
 
-		// 壁にめり込まないように調整
-		obj->pos.x = ClampF(obj->pos.x, padding_left, padding_right);
+		// フィールドのつながり
+		switch (connection)
+		{
+		case CONNECTION_BARRIER:
+			// 壁にあたったら調整
+			obj->pos.x = ClampF(obj->pos.x, padding_left, padding_right);
+			break;
+		case CONNECTION_LOOP:
+			// 壁にあたったらループ
+			obj->pos.x = GetLoopRangeF(obj->pos.x, padding_left, padding_right);
+			break;
+		}
 	}
 
 	return side_hit;
 }
 
 // <フィールド描画>
-void GameObject_Field_Render(GameObject* field)
+void GameObject_Field_Render(const GameObject* field)
 {
-	// コート表示
-	DrawDashedLineAA(field->pos.x, GameObject_GetY(field, TOP), field->pos.x, GameObject_GetY(field, BOTTOM), COLOR_WHITE, 8, 2);
 }
-

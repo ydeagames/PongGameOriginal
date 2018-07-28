@@ -124,14 +124,14 @@ BOOL GameMenu_OnPressed(GameMenu* menu)
 					GameObject banner = menu->scene->field;
 					banner.size.y = 115;
 					{
-						GameObject_Render(&banner, COLOR_WHITE);
+						GameObject_Render(&banner);
 						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -20), COLOR_BLACK, menu->resources->font_menu, "▼通信相手のIPアドレスを入力して下さい");
 						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -46), COLOR_BLACK, menu->resources->font_note, "(例) 127.0.0.1　　Enterで確定　　ピリオドを3つ含みます");
 						DrawBox((int)GameObject_GetX(&banner, CENTER_X) - 200, (int)GameObject_GetY(&banner, TOP, -60), (int)GameObject_GetX(&banner, CENTER_X) + 200, (int)GameObject_GetY(&banner, TOP, -90), 0xeeeeee, TRUE);
 					}
 					ip_valid = GameMenu_InputIP(menu, (int)GameObject_GetX(&banner, CENTER_X) - 200 + 6, (int)GameObject_GetY(&banner, TOP, -60) + 6, &ip);
 					{
-						GameObject_Render(&banner, COLOR_WHITE);
+						GameObject_Render(&banner);
 						DrawFormatStringToHandle((int)(GameObject_GetX(&banner, CENTER_X) - 200), (int)GameObject_GetY(&banner, TOP, -40), COLOR_BLACK, menu->resources->font_menu, "接続中....");
 						ScreenFlip();
 					}
@@ -183,9 +183,11 @@ void GameMenu_Render(GameMenu* menu)
 	inner.pos.y += 10;
 
 	{
+		GameObject field = menu->scene->field;
+		field.sprite.color = 0x222222;
 		SetDrawBlendMode(DX_BLENDMODE_INVDESTCOLOR, 255);
-		GameObject_Render(&menu->scene->field, 0x222222);
-		GameObject_Render(&inner, COLOR_WHITE);
+		GameObject_Render(&field);
+		GameObject_Render(&inner);
 		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 
@@ -244,7 +246,7 @@ void GameMenu_Render(GameMenu* menu)
 		alert.size.x = 160;
 		alert.size.y = 40;
 
-		GameObject_Render(&alert, COLOR_RED);
+		GameObject_Render(&alert);
 		DrawFormatStringToHandle((int)GameObject_GetX(&alert, LEFT, -40), (int)GameObject_GetY(&alert, TOP, -10), COLOR_WHITE, menu->resources->font_menu,
 			"接続失敗");
 	}
